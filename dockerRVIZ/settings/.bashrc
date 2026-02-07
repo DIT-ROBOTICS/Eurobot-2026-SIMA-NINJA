@@ -120,7 +120,7 @@ fi
 # ** No MASTER in ROS2 
 
 source /opt/ros/humble/setup.bash
-source /install/setup.bash
+source install/setup.bash
 
 alias build='colcon build --symlink-install --parallel-workers 4'
 alias sim='ros2 launch navigation2_run sim_launch.py'
