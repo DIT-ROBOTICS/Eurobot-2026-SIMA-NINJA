@@ -7,9 +7,28 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(btcpp_ros2_interfaces REQUIRED)
+find_package(std_msgs REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
+set(THIS_PACKAGE_DEPS
+  rclcpp
+  std_msgs
+  btcpp_ros2_interfaces
+)
+include_directories(
+  include
+  ${catkin_INCLUDE_DIRS}
+)
+
+add_executable(ninja_sima_main_node src/ninja-sima-main_node.cpp)
+ament_target_dependencies(ninja_sima_main_node ${THIS_PACKAGE_DEPS})
+install(TARGETS ninja_sima_main_node
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
