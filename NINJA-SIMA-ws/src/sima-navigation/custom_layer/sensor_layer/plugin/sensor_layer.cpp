@@ -33,7 +33,7 @@ void SensorLayer::onInitialize()
     node->declare_parameter(name_ + ".ignore_zone_array", std::vector<double>{});
 
     // Get the parameter of wich sima is it
-    node->declare_parameter(name_ + ".sima_id", 1);
+    node->declare_parameter(name_ + ".sima_id", 10);
     node->get_parameter(name_ + ".sima_id", sima_id_);
     
     node->get_parameter(name_ + ".obstacle_radius", obstacle_radius_);
@@ -52,58 +52,22 @@ void SensorLayer::onInitialize()
         "/sensors/detected_obstacles", 10,
         std::bind(&SensorLayer::poseArrayCallback, this, std::placeholders::_1));
     
-    if (sima_id_ >= 1 && sima_id_ <= 4) {
+    if (sima_id_ == 10) {
         // TODO: Subscribe to other simas' pose topics
-        sima1_pose_sub_ = node->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-            "/sima_1/pose/global", 10,
+        ninja_sima_pose_sub_ = node->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+            "/sima_10/pose/global", 10,
             [this](const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg) {
                 // Callback body can be empty; we just need the subscription to exist
-                this->sima1_pose_ = msg->pose.pose;
-            });
-        sima2_pose_sub_ = node->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-            "/sima_2/pose/global", 10,
-            [this](const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg) {
-                // Callback body can be empty; we just need the subscription to exist
-                this->sima2_pose_ = msg->pose.pose;
-            });
-        sima3_pose_sub_ = node->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-            "/sima_3/pose/global", 10,
-            [this](const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg) {
-                // Callback body can be empty; we just need the subscription to exist
-                this->sima3_pose_ = msg->pose.pose;
-            });
-        sima4_pose_sub_ = node->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-            "/sima_4/pose/global", 10,
-            [this](const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg) {
-                // Callback body can be empty; we just need the subscription to exist
-                this->sima4_pose_ = msg->pose.pose;
+                this->ninja_sima_pose_ = msg->pose.pose;
             });
     }
-    else if (sima_id_ >= 11 && sima_id_ <= 14) {
+    else if (sima_id_ == 20) {
         sima_id_ -= 10; // Map 11->1, 12->2, etc.
-        sima1_pose_sub_ = node->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-            "/sima_11/pose/global", 10,
+        ninja_sima_pose_sub_ = node->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+            "/sima_20/pose/global", 10,
             [this](const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg) {
                 // Callback body can be empty; we just need the subscription to exist
-                this->sima1_pose_ = msg->pose.pose;
-            });
-        sima2_pose_sub_ = node->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-            "/sima_12/pose/global", 10,
-            [this](const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg) {
-                // Callback body can be empty; we just need the subscription to exist
-                this->sima2_pose_ = msg->pose.pose;
-            });
-        sima3_pose_sub_ = node->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-            "/sima_13/pose/global", 10,
-            [this](const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg) {
-                // Callback body can be empty; we just need the subscription to exist
-                this->sima3_pose_ = msg->pose.pose;
-            });
-        sima4_pose_sub_ = node->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-            "/sima_14/pose/global", 10,
-            [this](const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg) {
-                // Callback body can be empty; we just need the subscription to exist
-                this->sima4_pose_ = msg->pose.pose;
+                this->ninja_sima_pose_ = msg->pose.pose;
             });
     }
     
@@ -140,48 +104,6 @@ bool SensorLayer::isInsideAnyIgnoreZone(double x, double y)
             return true;
         }
     }
-    return false;
-}
-
-bool SensorLayer::isPointNearOtherRobots(double x, double y)
-{
-    // TODO:
-    // 1. Get list of other robots' positions, need to subscribe to /sima_1/pose/global (geometry_msgs/msg/PoseWithCovarianceStamped)
-    // 2. For each robot position, calculate distance to (x, y)
-    // 3. If distance < threshold (e.g., 0.3m), return true
-
-    for (int robot_id = 1; robot_id <= 4; ++robot_id) {
-        if (robot_id == sima_id_) continue; // Skip self
-
-        geometry_msgs::msg::Pose other_robot_pose;
-        if (robot_id == 1) {
-            if (sima1_pose_.position.x == 0.0 && sima1_pose_.position.y == 0.0) {
-                continue; // Skip if no data yet
-            }
-            other_robot_pose = sima1_pose_;
-        } else if (robot_id == 2) {
-            if (sima2_pose_.position.x == 0.0 && sima2_pose_.position.y == 0.0) {
-                continue; // Skip if no data yet
-            }
-            other_robot_pose = sima2_pose_;
-        } else if (robot_id == 3) {
-            if (sima3_pose_.position.x == 0.0 && sima3_pose_.position.y == 0.0) {
-                continue; // Skip if no data yet
-            }
-            other_robot_pose = sima3_pose_;
-        } else if (robot_id == 4) {
-            if (sima4_pose_.position.x == 0.0 && sima4_pose_.position.y == 0.0) {
-                continue; // Skip if no data yet
-            }
-            other_robot_pose = sima4_pose_;
-        }
-
-        double dist = std::hypot(x - other_robot_pose.position.x, y - other_robot_pose.position.y);
-        if (dist < 0.1) { // Threshold of 0.1 m
-            return true;
-        }
-    }
-
     return false;
 }
 
@@ -253,11 +175,6 @@ void SensorLayer::poseArrayCallback(const geometry_msgs::msg::PoseArray::SharedP
     for(const auto& new_pose : msg->poses)
     {
         if (isInsideAnyIgnoreZone(new_pose.position.x, new_pose.position.y)) {
-            continue; // Ignore this point
-        }
-
-        // TODO: check whether this point is likely be other simas' position
-        if (isPointNearOtherRobots(new_pose.position.x, new_pose.position.y)) {
             continue; // Ignore this point
         }
 

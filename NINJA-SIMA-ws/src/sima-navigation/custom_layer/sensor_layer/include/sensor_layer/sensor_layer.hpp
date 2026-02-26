@@ -53,7 +53,6 @@ private:
   void poseArrayCallback(const geometry_msgs::msg::PoseArray::SharedPtr msg);
 
   bool isInsideAnyIgnoreZone(double x, double y);
-  bool isPointNearOtherRobots(double x, double y);
 
   void parseIgnoreZones(const std::vector<double>& params);
 
@@ -68,10 +67,7 @@ private:
   rclcpp::Subscription<geometry_msgs::msg::PoseArray>::SharedPtr sub_;
 
   // Declare Subscriber of sima pose
-  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sima1_pose_sub_;
-  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sima2_pose_sub_;
-  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sima3_pose_sub_;
-  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sima4_pose_sub_;
+  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr ninja_sima_pose_sub_;
   
   // Store all historically detected obstacle center points (World Frame / Map Frame)
   std::vector<ObstacleNode> persistent_obstacles_;
@@ -85,10 +81,7 @@ private:
   double obstacle_lifespan_ = 5.0;
 
   // Declare variable to store other robots' positions
-  geometry_msgs::msg::Pose sima1_pose_;
-  geometry_msgs::msg::Pose sima2_pose_;
-  geometry_msgs::msg::Pose sima3_pose_;
-  geometry_msgs::msg::Pose sima4_pose_;
+  geometry_msgs::msg::Pose ninja_sima_pose_;
 };
 
 }  // namespace Sensor_costmap_plugin

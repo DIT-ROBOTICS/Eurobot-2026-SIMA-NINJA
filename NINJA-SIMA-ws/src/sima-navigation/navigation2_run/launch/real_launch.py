@@ -37,30 +37,9 @@ def generate_launch_description():
     # params_file_name = 'nav2_params_sima.yaml'
     # print('[INFO] [real_launch] Use nav2_params_sima.yaml')
 
-    if ros_domain_id == '51':
-        params_file_name = 'nav2_params_sima_51.yaml'
-        print('[INFO] [real_launch] ROS_DOMAIN_ID=51. Use nav2_params_sima_51.yaml')
-    elif ros_domain_id == '52':
-        params_file_name = 'nav2_params_sima_52.yaml'
-        print('[INFO] [real_launch] ROS_DOMAIN_ID=52. Use nav2_params_sima_52.yaml')
-    elif ros_domain_id == '53':
-        params_file_name = 'nav2_params_sima_53.yaml'
-        print('[INFO] [real_launch] ROS_DOMAIN_ID=53. Use nav2_params_sima_53.yaml')
-    elif ros_domain_id == '54':
-        params_file_name = 'nav2_params_sima_54.yaml'
-        print('[INFO] [real_launch] ROS_DOMAIN_ID=54. Use nav2_params_sima_54.yaml')
-    elif ros_domain_id == '61':
-        params_file_name = 'nav2_params_sima_61.yaml'
-        print('[INFO] [real_launch] ROS_DOMAIN_ID=61. Use nav2_params_sima_61.yaml')
-    elif ros_domain_id == '62':
-        params_file_name = 'nav2_params_sima_62.yaml'
-        print('[INFO] [real_launch] ROS_DOMAIN_ID=62. Use nav2_params_sima_62.yaml')
-    elif ros_domain_id == '63':
-        params_file_name = 'nav2_params_sima_63.yaml'
-        print('[INFO] [real_launch] ROS_DOMAIN_ID=63. Use nav2_params_sima_63.yaml')
-    elif ros_domain_id == '64':
-        params_file_name = 'nav2_params_sima_64.yaml'
-        print('[INFO] [real_launch] ROS_DOMAIN_ID=64. Use nav2_params_sima_64.yaml')
+    if ros_domain_id == '59':
+        params_file_name = 'nav2_params_sima_ninja_59.yaml'
+        print('[INFO] [real_launch] ROS_DOMAIN_ID=59. Use nav2_params_sima_ninja_59.yaml')
     else:
         params_file_name = 'nav2_params_sima.yaml'
         print(f'[INFO] [real_launch] Unrecognized ROS_DOMAIN_ID={ros_domain_id}. Use default params file')
