@@ -57,7 +57,6 @@ COPY --from=build /ws/install /root/uros-agent-ws/install
 RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc && \
     echo "source /root/uros-agent-ws/install/setup.bash" >> /root/.bashrc
 
-RUN echo HI
 COPY ./script/uros-agent-start.sh /root/uros-agent-ws/uros-agent-start.sh
 RUN chmod +x /root/uros-agent-ws/uros-agent-start.sh
 

@@ -1,6 +1,6 @@
 
 # Dockerfile for Nav2 on RPI5(arm64)
-FROM ubuntu:22.04
+FROM ubuntu:22.04 AS base
 
 ARG USERNAME=user
 ARG USERID=1000
@@ -45,7 +45,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=private \
     ./tmp/install-ros2.sh && \
     rm /tmp/install-ros2.sh
 
-
 # Install colcon and other Python tools
 RUN --mount=type=cache,target=/var/cache/apt,sharing=private \
     apt-get update && \
@@ -56,7 +55,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=private \
     python3-vcstool && \
     rm -rf /var/lib/apt/lists/*
 
-
+FROM base AS build
 # Install Nav2 dependencies and other useful ROS2 packages
 RUN --mount=type=cache,target=/var/cache/apt,sharing=private \
     apt-get update && \
@@ -88,23 +87,17 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=private \
     ros-$ROS_DISTRO-teleop-twist-joy && \
     rm -rf /var/lib/apt/lists/*
 
+FROM build AS deploy
 # Create a non-root user to use the container
 RUN groupadd --gid ${USERGID} ${USERNAME} \
     && useradd --uid ${USERID} --gid ${USERGID} -m ${USERNAME} -s /bin/bash \
     && echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
-
-RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends tzdata
-RUN TZ=Asia/Taipei && \
-    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
-    echo $TZ > /etc/timezone && \
-    dpkg-reconfigure -f noninteractive tzdata 
 
 USER ${USERNAME}
 WORKDIR /home/${USERNAME}
 COPY ./settings/.bashrc /home/${USERNAME}/.bashrc 
 COPY ./settings/tf2_sensor_msgs.hpp /opt/ros/$ROS_DISTRO/include/tf2_sensor_msgs/tf2_sensor_msgs.hpp
 COPY ./settings/cyclonedds.xml /home/${USERNAME}/cyclonedds.xml
-
 
 RUN sudo apt autoremove -y && \
     sudo apt clean -y
