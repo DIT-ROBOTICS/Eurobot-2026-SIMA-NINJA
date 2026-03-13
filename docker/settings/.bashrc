@@ -121,8 +121,3 @@ fi
 
 source /opt/ros/humble/setup.bash
 source /install/setup.bash
-
-alias build='colcon build --symlink-install --parallel-workers 4'
-alias sim='ros2 launch navigation2_run sim_launch.py'
-alias docking_sim1='ros2 action send_goal /dock_robot opennav_docking_msgs/action/DockRobot "{use_dock_id: true, dock_id: 'flex_dock1'}"'
-alias docking_sim2='ros2 action send_goal /dock_robot opennav_docking_msgs/action/DockRobot "{use_dock_id: true, dock_id: 'flex_dock2'}"'
