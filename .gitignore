@@ -12,3 +12,4 @@ log/
 *.swp
 *.swo
 .env
+.vscode
