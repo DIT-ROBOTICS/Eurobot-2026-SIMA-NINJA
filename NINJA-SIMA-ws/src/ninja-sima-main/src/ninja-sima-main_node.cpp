@@ -11,7 +11,7 @@ NinjaSimaMain::NinjaSimaMain() : Node("ninja_sima_main_node"){
 
     // Define the sequence of points to test
     test_waypoints_.push_back({1.0, 1.0, 0.0});
-    test_waypoints_.push_back({1.0, 2.0, 1.57});
+    test_waypoints_.push_back({1.0, 1.1, 1.57});
     test_waypoints_.push_back({0.5, 1.0, 3.14});
     test_waypoints_.push_back({0.2, 0.9, 0.0});
 
