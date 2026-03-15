@@ -213,9 +213,9 @@ def generate_launch_description():
     ld.add_action(declare_use_respawn_cmd)
     ld.add_action(declare_robot_pose_remap_cmd)
 
-    ld.add_action(declare_remove_tf_prefix_cmd)
+    # ld.add_actsion(declare_remove_tf_prefix_cmd)
 
-    ld.add_action(tf_republisher_cmd)
+    # ld.add_action(tf_republisher_cmd)
 
     # Declare obstacle simulator launch option
     # ld.add_action(declare_use_obstacle_sim_cmd)

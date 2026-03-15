@@ -67,7 +67,7 @@ bt_navigator:
 
 ControllerSelector:
   ros__parameters:
-    Diff_controller: "Diff"
+    TEB_controller: "TEB"
 
 bt_navigator_navigate_through_poses_rclcpp_node:
   ros__parameters:
