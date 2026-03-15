@@ -33,7 +33,7 @@ def generate_launch_description():
     launch_dir = os.path.join(pkg_dir, 'launch')
     ros_domain_id = os.getenv('ROS_DOMAIN_ID')
 
-    params_file_name = 'nav2_params_sima.yaml'
+    params_file_name = 'nav2_params_sima_ninja_59.yaml'
     print('[INFO] [sim_launch] Use nav2_params_sima.yaml')
 
     # if ros_domain_id == '11':
@@ -223,7 +223,7 @@ def generate_launch_description():
     # Add the actions to launch all of the navigation nodes
     ld.add_action(rviz_cmd)       # remove if it is in RPI
     ld.add_action(bringup_cmd)
-    ld.add_action(vl53_bridge_cmd)
+    # ld.add_action(vl53_bridge_cmd)
 
     # Add the system check node
     ld.add_action(system_check_cmd)
@@ -231,6 +231,6 @@ def generate_launch_description():
     # Add the obstacle simulator node
     # ld.add_action(obstacle_sim_cmd)
 
-    ld.add_action(sima_navigator_cmd)
+    # ld.add_action(sima_navigator_cmd)
 
     return ld
