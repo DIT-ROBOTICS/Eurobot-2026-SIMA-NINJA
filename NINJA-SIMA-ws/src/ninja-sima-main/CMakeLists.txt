@@ -31,7 +31,10 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(ninja_sima_main_node src/ninja-sima-main_node.cpp)
+add_executable(ninja_sima_main_node 
+  src/ninja-sima-main_node.cpp
+  src/ninja-sima-main_nav_to_pose.cpp
+)
 ament_target_dependencies(ninja_sima_main_node ${THIS_PACKAGE_DEPS})
 install(TARGETS ninja_sima_main_node
   DESTINATION lib/${PROJECT_NAME}

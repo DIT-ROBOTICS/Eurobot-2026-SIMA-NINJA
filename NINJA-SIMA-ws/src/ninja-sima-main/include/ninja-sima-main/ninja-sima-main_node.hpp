@@ -4,8 +4,14 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
 #include "btcpp_ros2_interfaces/srv/start_up_srv.hpp"
-#include "rclcpp_action/rclcpp_action.hpp"
-#include "nav2_msgs/action/navigate_to_pose.hpp"
+#include "ninja-sima-main/ninja-sima-main_nav_to_pose.hpp"
+#include <vector>
+
+struct Pose2D {
+    double x;
+    double y;
+    double theta;
+};
 
 enum class NinjaSimaMainState{
     INIT,
@@ -34,20 +40,18 @@ private:
     void StartSub_callback(const std_msgs::msg::Bool::SharedPtr msg);
     void StopSub_callback(const std_msgs::msg::Bool::SharedPtr msg);
 
-    void move_to_pose(double x, double y, double theta);
-    void goal_response_callback(const rclcpp_action::ClientGoalHandle<nav2_msgs::action::NavigateToPose>::SharedPtr & goal_handle);
-    void feedback_callback(
-        rclcpp_action::ClientGoalHandle<nav2_msgs::action::NavigateToPose>::SharedPtr,
-        const std::shared_ptr<const nav2_msgs::action::NavigateToPose::Feedback> feedback);
-    void result_callback(const rclcpp_action::ClientGoalHandle<nav2_msgs::action::NavigateToPose>::WrappedResult & result);
+    void on_goal_reached(bool success);
     
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr ReadyCheck_sub_;
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr Start_sub_;
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr Stop_sub_;
     rclcpp::Client<btcpp_ros2_interfaces::srv::StartUpSrv>::SharedPtr StartUp_client_;
-    rclcpp_action::Client<nav2_msgs::action::NavigateToPose>::SharedPtr nav_to_pose_client_;
+    
+    std::shared_ptr<NinjaSimaMainNavToPose> nav_to_pose_;
 
+    std::vector<Pose2D> test_waypoints_;
+    size_t current_waypoint_index_;
 
     NinjaSimaMainState state_;
     bool team_;
