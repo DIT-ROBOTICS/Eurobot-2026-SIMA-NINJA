@@ -26,9 +26,13 @@ void RobotPoseNode::update_pose()
     double dt = (current_time - last_time_).seconds();
 
     // Update pose based on current velocities
-    double delta_x = current_cmd_vel_.linear.x * dt * cos(theta_);
-    double delta_y = current_cmd_vel_.linear.x * dt * sin(theta_);
-    double delta_theta = current_cmd_vel_.angular.z * dt;
+    double vx = current_cmd_vel_.linear.x;
+    double vy = current_cmd_vel_.linear.y;
+    double vtheta = current_cmd_vel_.angular.z;
+
+    double delta_x = (vx * cos(theta_) - vy * sin(theta_)) * dt;
+    double delta_y = (vx * sin(theta_) + vy * cos(theta_)) * dt;
+    double delta_theta = vtheta * dt;
 
     x_ += delta_x;
     y_ += delta_y;
