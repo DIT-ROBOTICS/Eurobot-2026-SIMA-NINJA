@@ -2,18 +2,15 @@
 #include <chrono>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <yaml-cpp/yaml.h>
+#include <ament_index_cpp/get_package_share_directory.hpp>
+#include <filesystem>
 
 using namespace std::chrono_literals;
 
-NinjaSimaMain::NinjaSimaMain() : Node("ninja_sima_main_node"){
+NinjaSimaMain::NinjaSimaMain() : Node("ninja_sima_main_node"), is_task_running_(false), current_running_task_num_(-1){
     state_ = NinjaSimaMainState::START;
     current_waypoint_index_ = 0;
-
-    // Define the sequence of points to test
-    test_waypoints_.push_back({1.0, 1.0, 0.0});
-    test_waypoints_.push_back({1.0, 1.1, 1.57});
-    test_waypoints_.push_back({0.5, 1.0, 3.14});
-    test_waypoints_.push_back({0.2, 0.9, 0.0});
 
     init_param();
     ReadyCheck_sub_ = this->create_subscription<std_msgs::msg::Bool>(
@@ -26,6 +23,10 @@ NinjaSimaMain::NinjaSimaMain() : Node("ninja_sima_main_node"){
         "/robot/stop", 10,
         std::bind(&NinjaSimaMain::StopSub_callback, this, std::placeholders::_1));
     StartUp_client_ = this->create_client<btcpp_ros2_interfaces::srv::StartUpSrv>("/robot/startup/ready_signal");
+    MissionType_pub_ = this->create_publisher<std_msgs::msg::Int32>("/mission_type", 10);
+    MissionStatus_sub_ = this->create_subscription<std_msgs::msg::Int32>(
+        "/mission_status", 10,
+        std::bind(&NinjaSimaMain::MissionStatus_callback, this, std::placeholders::_1));
     
     nav_to_pose_ = std::make_shared<NinjaSimaMainNavToPose>(this);
     nav_to_pose_->set_goal_reached_callback(
@@ -45,12 +46,73 @@ void NinjaSimaMain::timer_callback() {
 }
 
 void NinjaSimaMain::init_param() {    
-    // Initialize team parameter (default to false)
-    this->declare_parameter<bool>("team", false); // false: blue ;true: yellow
+    // 從 ROS 2 Parameter Server 讀取 team 參數 (預設為 "blue")
+    this->declare_parameter<std::string>("team", "blue");
+    std::string team_str;
+    this->get_parameter("team", team_str);
 
-    this->get_parameter<bool>("team", team_);
+    RCLCPP_INFO(this->get_logger(), "Team selected: %s", team_str.c_str());
+
+    load_waypoints(team_str);
     
     RCLCPP_INFO(this->get_logger(), "NinjaSimaMain initialized");
+}
+
+void NinjaSimaMain::load_waypoints(const std::string& team_name) {
+    try {
+        std::string package_share_directory = ament_index_cpp::get_package_share_directory("ninja-sima-main");
+        std::string yaml_file_name = team_name + "_param.yaml";
+        std::string yaml_path = package_share_directory + "/params/" + yaml_file_name;
+
+        YAML::Node config = YAML::LoadFile(yaml_path);
+        
+        if (config["ninja_sima_main_node"] && config["ninja_sima_main_node"]["ros__parameters"]) {
+            auto params = config["ninja_sima_main_node"]["ros__parameters"];
+            
+            if (params["waypoints"]) {
+                for (const auto& wp_node : params["waypoints"]) {
+                    std::string wp_name = wp_node.as<std::string>();
+                    
+                    if (params[wp_name]) {
+                        WaypointTask task;
+                        task.name = wp_name;
+                        task.x = params[wp_name]["x"].as<double>();
+                        task.y = params[wp_name]["y"].as<double>();
+                        task.yaw = params[wp_name]["yaw"].as<double>();
+                        task.task_type = params[wp_name]["task_type"].as<std::string>();
+                        task.task_num = -1; // Default
+                        
+                        if (params[wp_name]["task_num"]) {
+                            task.task_num = params[wp_name]["task_num"].as<std::int32_t>();
+                        }
+                        
+                        task_queue_.push(task);
+                        RCLCPP_INFO(this->get_logger(), "Loaded Task %s: [%.2f, %.2f, %.2f] Type: %s, Num: %d", 
+                                    task.name.c_str(), task.x, task.y, task.yaw, task.task_type.c_str(), task.task_num);
+                    }
+                }
+            }
+        }
+    } catch (const std::exception& e) {
+        RCLCPP_ERROR(this->get_logger(), "Exception parsing YAML: %s", e.what());
+    }
+}
+
+void NinjaSimaMain::execute_task(const std::int32_t& task_num) {
+    if (task_num <= 0) { // Assume invalid/dummy task
+        is_task_running_ = false;
+        return;
+    }
+    
+    RCLCPP_INFO(this->get_logger(), ">>> Executing Task Number: %d <<<", task_num);
+    
+    current_running_task_num_ = task_num;
+    is_task_running_ = true;
+    
+    // Publish task code to firmware
+    std_msgs::msg::Int32 msg;
+    msg.data = task_num;
+    MissionType_pub_->publish(msg);
 }
 
 void NinjaSimaMain::state_transmit() {
@@ -82,14 +144,16 @@ void NinjaSimaMain::ninja_READY() {
 
 void NinjaSimaMain::ninja_START() {
     /* Do all the mission until all things being done */
-    if (!nav_to_pose_->is_navigating() && current_waypoint_index_ < test_waypoints_.size()) {
-        auto wp = test_waypoints_[current_waypoint_index_];
-        RCLCPP_INFO(this->get_logger(), "Sending waypoint %zu: x=%.2f, y=%.2f, theta=%.2f",
-                    current_waypoint_index_, wp.x, wp.y, wp.theta);
-        
-        nav_to_pose_->move_to_pose(wp.x, wp.y, wp.theta);
-    } else if (current_waypoint_index_ >= test_waypoints_.size() && !nav_to_pose_->is_navigating()) {
-        RCLCPP_INFO_ONCE(this->get_logger(), "All test waypoints have been reached.");
+    if (!nav_to_pose_->is_navigating() && !is_task_running_) {
+        if (!task_queue_.empty()) {
+            WaypointTask wp = task_queue_.front();
+            RCLCPP_INFO(this->get_logger(), "Sending waypoint %s: x=%.2f, y=%.2f, theta=%.2f",
+                        wp.name.c_str(), wp.x, wp.y, wp.yaw);
+            
+            nav_to_pose_->move_to_pose(wp.x, wp.y, wp.yaw);
+        } else {
+            RCLCPP_INFO_ONCE(this->get_logger(), "All tasks have been completed.");
+        }
     }
 }
 
@@ -130,9 +194,36 @@ void NinjaSimaMain::StopSub_callback(const std_msgs::msg::Bool::SharedPtr msg) {
     }
 }
 
+void NinjaSimaMain::MissionStatus_callback(const std_msgs::msg::Int32::SharedPtr msg){
+    mission_type_now_ = int32_t(msg->data/10);
+    mission_status_ = msg->data%10;
+
+    if (is_task_running_ && mission_type_now_ == current_running_task_num_) {
+        // Status 1 means completed
+        if (mission_status_ == 1) {
+            RCLCPP_INFO(this->get_logger(), "Task %d completed by firmware.", current_running_task_num_);
+            is_task_running_ = false;
+            current_running_task_num_ = -1;
+        }
+    }
+}
+
 void NinjaSimaMain::on_goal_reached(bool success) {
-    if (success) {
-        current_waypoint_index_++; // Move to next waypoint
+    if (success && !task_queue_.empty()) {
+        WaypointTask completed_task = task_queue_.front();
+        task_queue_.pop(); // 導航成功，從 queue 移除
+        
+        if (completed_task.task_type == "docking") {
+            // 如果 type 是 docking，執行 task_num
+            RCLCPP_INFO(this->get_logger(), "Goal reached. Task type is 'docking'. Preparing to execute task %d.", completed_task.task_num);
+            is_task_running_ = true;
+            execute_task(completed_task.task_num);
+        } else if (completed_task.task_type == "goto") {
+            // 如果是 goto 就單純忽略 task_num
+            RCLCPP_INFO(this->get_logger(), "Goal reached. Task type is 'goto'. Moving to next task.");
+        }
+    } else if (!success) {
+        RCLCPP_WARN(this->get_logger(), "Navigation Failed! Handling error needed.");
     }
 }
 

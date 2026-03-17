@@ -14,6 +14,8 @@ find_package(rclcpp_action REQUIRED)
 find_package(nav2_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
+find_package(yaml-cpp REQUIRED)
+find_package(ament_index_cpp REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
@@ -25,6 +27,8 @@ set(THIS_PACKAGE_DEPS
   nav2_msgs
   tf2
   tf2_geometry_msgs
+  yaml-cpp
+  ament_index_cpp
 )
 include_directories(
   include
@@ -35,9 +39,16 @@ add_executable(ninja_sima_main_node
   src/ninja-sima-main_node.cpp
   src/ninja-sima-main_nav_to_pose.cpp
 )
+target_link_libraries(ninja_sima_main_node yaml-cpp)
 ament_target_dependencies(ninja_sima_main_node ${THIS_PACKAGE_DEPS})
 install(TARGETS ninja_sima_main_node
   DESTINATION lib/${PROJECT_NAME}
+)
+
+install(DIRECTORY
+  params
+  launch
+  DESTINATION share/${PROJECT_NAME}/
 )
 
 
