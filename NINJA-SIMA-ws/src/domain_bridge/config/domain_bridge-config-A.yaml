@@ -1,6 +1,6 @@
 # Name of the domain bridge, used for node naming and logging
 name: my_bridge
-from_domain: 14
+from_domain: 13
 to_domain: 50
 topics:
   # Bridge "/bot2/pose/global"
@@ -8,7 +8,7 @@ topics:
   #   type: geometry_msgs/msg/PoseWithCovarianceStamped
   
   # Bridge sima_10/pose/global to ninja sima domains
-  sima_10/pose/global:
+  sima_1/pose/global:
     type: geometry_msgs/msg/PoseWithCovarianceStamped
     to_domain: 59
 
