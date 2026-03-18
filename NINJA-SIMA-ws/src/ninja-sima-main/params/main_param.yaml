@@ -1,0 +1,3 @@
+ninja_sima_main_node:
+  ros__parameters:
+    team: "blue"
