@@ -11,6 +11,8 @@ services:
     ipc: host
     privileged: true
     stdin_open: true
+    env_file:
+      - .env
     stop_grace_period: &STOP_GRACE_PERIOD 1s
 
     volumes:
@@ -29,7 +31,6 @@ services:
       - RCUTILS_COLORIZED_OUTPUT=1
       - XAUTHORITY=/home/user/.Xauthority   # Set Xauthority path
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-      - ROS_DOMAIN_ID=59  # ! Please distinguish the domain ID with other containers
       # - CYCLONEDDS_URI=file:///home/user/cyclonedds.xml
 
   uros-agent:
@@ -42,16 +43,12 @@ services:
     ipc: host
     privileged: true
     stdin_open: true
+    env_file:
+      - .env
     stop_grace_period: &STOP_GRACE_PERIOD 1s
 
     volumes:
       - /dev:/dev
-
-    environment:
-      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-0}
-      - AGENT_TYPE=${AGENT_TYPE:-serial}
-      - AGENT_BAUD_RATE=${AGENT_BAUD_RATE:-1000000}
-      - AGENT_DEVICE=${AGENT_DEVICE:-/dev/ttyAMA0}
 
     entrypoint: ["/bin/bash", "-c", "/root/uros-agent-ws/uros-agent-start.sh"]
     command: ["/bin/bash"]
