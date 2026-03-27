@@ -1,24 +1,68 @@
 ninja_sima_main_node:
   ros__parameters:
-    waypoints: ["p1", "p2", "p3"]
+    waypoints: ["p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9"]
     
     p1:
-      x: 1.2
-      y: 0.5
-      yaw: 0.0
-      task_type: "goto"
-      task_num: "0"
+      x: 1.9
+      y: 1.87
+      yaw: 3.744
+      task_type: "docking"
+      task_num: "13"
       
     p2:
-      x: 2.3
-      y: 1.0
-      yaw: 1.57
+      x: 1.9
+      y: 1.87
+      yaw: 3.744
       task_type: "docking"
       task_num: "11"
-      
+    
     p3:
-      x: 1.2
-      y: 0.9
-      yaw: 3.14
+      x: 1.787
+      y: 1.647
+      yaw: 3.387
       task_type: "docking"
-      task_num: "10"
+      task_num: "12"
+    
+    # move 3rd nut    
+    p4:
+      x: 1.777
+      y: 1.862
+      yaw: 2.112
+      task_type: "docking"
+      task_num: "13"
+    
+    p5:
+      x: 1.777
+      y: 1.862
+      yaw: 2.112
+      task_type: "docking"
+      task_num: "11"
+    
+    p6:
+      x: 1.796
+      y: 1.649
+      yaw: 2.336
+      task_type: "docking"
+      task_num: "12"
+    
+    # move 4th nut
+    p7:
+      x: 1.722
+      y: 1.851
+      yaw: 2.02
+      task_type: "docking"
+      task_num: "13"
+    
+    p8:
+      x: 1.722
+      y: 1.851
+      yaw: 2.02
+      task_type: "docking"
+      task_num: "11"
+    
+    p9:
+      x: 1.717
+      y: 1.654
+      yaw: 2.435
+      task_type: "docking"
+      task_num: "12"
