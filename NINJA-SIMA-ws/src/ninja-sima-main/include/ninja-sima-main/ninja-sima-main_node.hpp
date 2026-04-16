@@ -4,6 +4,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
 #include "std_msgs/msg/int32.hpp"
+#include "std_msgs/msg/int16.hpp"
 #include "btcpp_ros2_interfaces/srv/start_up_srv.hpp"
 #include "ninja-sima-main/ninja-sima-main_nav_to_pose.hpp"
 #include <vector>
@@ -51,7 +52,7 @@ private:
     void ninja_STOP();  // force stop all the process
 
     void ReadyCheckSub_callback(const std_msgs::msg::Bool::SharedPtr msg);
-    void StartSub_callback(const std_msgs::msg::Bool::SharedPtr msg);
+    void StartSub_callback(const std_msgs::msg::Int16::SharedPtr msg);
     void StopSub_callback(const std_msgs::msg::Bool::SharedPtr msg);
     void MissionStatus_callback(const std_msgs::msg::Int32::SharedPtr msg);
 
@@ -59,7 +60,7 @@ private:
     
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr ReadyCheck_sub_;
-    rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr Start_sub_;
+    rclcpp::Subscription<std_msgs::msg::Int16>::SharedPtr Start_sub_;
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr Stop_sub_;
     rclcpp::Client<btcpp_ros2_interfaces::srv::StartUpSrv>::SharedPtr StartUp_client_;
     rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr MissionType_pub_;

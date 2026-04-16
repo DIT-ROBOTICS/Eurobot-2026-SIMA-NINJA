@@ -16,8 +16,8 @@ NinjaSimaMain::NinjaSimaMain() : Node("ninja_sima_main_node"), is_task_running_(
     ReadyCheck_sub_ = this->create_subscription<std_msgs::msg::Bool>(
         "/robot/startup/are_you_ready", 10,
         std::bind(&NinjaSimaMain::ReadyCheckSub_callback, this, std::placeholders::_1));
-    Start_sub_ = this->create_subscription<std_msgs::msg::Bool>(
-        "/robot/start_signal", 10,
+    Start_sub_ = this->create_subscription<std_msgs::msg::Int16>(
+        "robot/startup/ninja/start", 10,
         std::bind(&NinjaSimaMain::StartSub_callback, this, std::placeholders::_1));
     Stop_sub_ = this->create_subscription<std_msgs::msg::Bool>(
         "/robot/stop", 10,
@@ -180,7 +180,7 @@ void NinjaSimaMain::ReadyCheckSub_callback(const std_msgs::msg::Bool::SharedPtr 
     }
 }
 
-void NinjaSimaMain::StartSub_callback(const std_msgs::msg::Bool::SharedPtr msg) {
+void NinjaSimaMain::StartSub_callback(const std_msgs::msg::Int16::SharedPtr msg) {
     if (msg->data) {
         state_ = NinjaSimaMainState::START;
     } else {
