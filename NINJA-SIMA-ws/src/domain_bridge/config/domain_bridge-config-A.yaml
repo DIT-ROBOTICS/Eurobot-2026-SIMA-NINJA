@@ -8,7 +8,7 @@ topics:
   #   type: geometry_msgs/msg/PoseWithCovarianceStamped
   
   # Bridge sima_10/pose/global to ninja sima domains
-  sima_1/pose/global:
+  sima_10/pose/global:
     type: geometry_msgs/msg/PoseWithCovarianceStamped
     to_domain: 59
 
