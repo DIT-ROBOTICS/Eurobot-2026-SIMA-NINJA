@@ -3,66 +3,87 @@ ninja_sima_main_node:
     waypoints: ["p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9"]
     
     p1:
-      x: 1.9
-      y: 1.87
-      yaw: 3.744
+      x: 1.886
+      y: 1.894
+      yaw: 1.579
       task_type: "docking"
       task_num: "13"
-      
+
     p2:
-      x: 1.9
-      y: 1.87
-      yaw: 3.744
+      x: 1.886
+      y: 1.894
+      yaw: 1.579
       task_type: "docking"
       task_num: "11"
     
     p3:
-      x: 1.787
-      y: 1.647
-      yaw: 3.387
+      x: 1.827
+      y: 1.713
+      yaw: 1.639
       task_type: "docking"
       task_num: "12"
     
     # move 3rd nut    
     p4:
-      x: 1.777
-      y: 1.862
-      yaw: 2.112
-      task_type: "docking"
-      task_num: "13"
-    
-    p5:
-      x: 1.777
-      y: 1.862
-      yaw: 2.112
+      x: 1.789
+      y: 1.860
+      yaw: -0.04
       task_type: "docking"
       task_num: "11"
     
-    p6:
-      x: 1.796
+    p5:
+      x: 1.843
       y: 1.649
-      yaw: 2.336
+      yaw: -0.076
       task_type: "docking"
       task_num: "12"
     
     # move 4th nut
-    p7:
-      x: 1.722
-      y: 1.851
-      yaw: 2.02
-      task_type: "docking"
-      task_num: "13"
-    
-    p8:
-      x: 1.722
-      y: 1.851
-      yaw: 2.02
+    p6:
+      x: 1.728
+      y: 1.874
+      yaw: 0.023
       task_type: "docking"
       task_num: "11"
     
-    p9:
-      x: 1.717
-      y: 1.654
-      yaw: 2.435
+    p7:
+      x: 1.789
+      y: 1.655
+      yaw: -0.092
       task_type: "docking"
       task_num: "12"
+    # balck hazelnut
+    p8:
+      x: 1.760
+      y: 1.887
+      yaw: -0.403
+      task_type: "goto"
+      task_num: "11"
+    
+    p9:
+      x: 2.286
+      y: 1.833
+      yaw: -0.493
+      task_type: "docking"
+      task_num: "29"
+
+    # p10:
+    #   x: 2.157
+    #   y: 1.823
+    #   yaw: -0.489
+    #   task_type: "docking"
+    #   task_num: "12"
+
+    # p11:
+    #   x: 2.132
+    #   y: 1.866
+    #   yaw: -0.520
+    #   task_type: "docking"
+    #   task_num: "12"
+
+    # p12:
+    #   x: 2.256
+    #   y: 1.758
+    #   yaw: 3.674
+    #   task_type: "docking"
+    #   task_num: "12"
