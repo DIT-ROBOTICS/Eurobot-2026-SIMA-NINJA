@@ -552,6 +552,8 @@ docking_server:
     dock_plugins: ["dock"]
     dock:
       plugin: "opennav_docking::SimpleChargingDock"
+      docking_point_x_offset: -0.20
+      docking_point_y_offset: 0.0
       docking_threshold: 0.005
       use_debounce: true
       xy_debounce_threshold: 2

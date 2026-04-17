@@ -137,8 +137,8 @@ protected:
   bool use_external_detection_pose_ = false;
   double external_detection_timeout_;
   tf2::Quaternion external_detection_rotation_;
-  double external_detection_translation_x_;
-  double external_detection_translation_y_;
+  double docking_point_x_offset_;
+  double docking_point_y_offset_;
 
   // Filtering of detected poses
   std::shared_ptr<PoseFilter> filter_;
