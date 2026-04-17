@@ -35,7 +35,7 @@ void NavTypeSelector::setType(std::string const & mode, char & offset_direction,
     } else if(strstr(mode.c_str(), "angularBoost") != nullptr) {
         controller_selector_msg_.data = "AngularBoost";
     } else {
-        controller_selector_msg_.data = "Slow";
+        controller_selector_msg_.data = "TEB";
     }
     RCLCPP_INFO(node_->get_logger(), "\033[1;36m Controller has set to \"%s\" \033[0m", controller_selector_msg_.data.c_str());
     controller_selector_pub_->publish(controller_selector_msg_);    // Publish the controller type
