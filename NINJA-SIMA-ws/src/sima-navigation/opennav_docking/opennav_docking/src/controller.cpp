@@ -55,7 +55,7 @@ Controller::Controller(const rclcpp_lifecycle::LifecycleNode::SharedPtr & node) 
 
     // Subscribe to the robot's pose
     robot_pose_sub_ = node->create_subscription<nav_msgs::msg::Odometry>(
-        "/odom",
+        "/pose/global",
         rclcpp::QoS(10).durability_volatile(),
         [this](const nav_msgs::msg::Odometry::SharedPtr msg) {
             robot_pose_.x_ = (*msg).pose.pose.position.x;

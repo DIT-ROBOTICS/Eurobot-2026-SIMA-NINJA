@@ -24,6 +24,9 @@ void SimpleChargingDock::configure(
   const rclcpp_lifecycle::LifecycleNode::WeakPtr & parent,
   const std::string & name, std::shared_ptr<tf2_ros::Buffer> tf)
 {
+  const double default_docking_point_x_offset = -0.20;
+  const double default_docking_point_y_offset = 0.0;
+
   name_ = name;
   tf2_buffer_ = tf;
   is_charging_ = false;
@@ -42,9 +45,14 @@ void SimpleChargingDock::configure(
   nav2_util::declare_parameter_if_not_declared(
     node_, name + ".external_detection_timeout", rclcpp::ParameterValue(1.0));
   nav2_util::declare_parameter_if_not_declared(
-    node_, name + ".external_detection_translation_x", rclcpp::ParameterValue(-0.20));
+    node_, name + ".docking_point_x_offset", rclcpp::ParameterValue(default_docking_point_x_offset));
   nav2_util::declare_parameter_if_not_declared(
-    node_, name + ".external_detection_translation_y", rclcpp::ParameterValue(0.0));
+    node_, name + ".docking_point_y_offset", rclcpp::ParameterValue(default_docking_point_y_offset));
+  // Deprecated, kept for backward compatibility.
+  nav2_util::declare_parameter_if_not_declared(
+    node_, name + ".external_detection_translation_x", rclcpp::ParameterValue(default_docking_point_x_offset));
+  nav2_util::declare_parameter_if_not_declared(
+    node_, name + ".external_detection_translation_y", rclcpp::ParameterValue(default_docking_point_y_offset));
   nav2_util::declare_parameter_if_not_declared(
     node_, name + ".external_detection_rotation_yaw", rclcpp::ParameterValue(0.0));
   nav2_util::declare_parameter_if_not_declared(
@@ -95,10 +103,29 @@ void SimpleChargingDock::configure(
   node_->get_parameter(name + ".use_battery_status", use_battery_status_);
   // node_->get_parameter(name + ".use_external_detection_pose", use_external_detection_pose_);
   node_->get_parameter(name + ".external_detection_timeout", external_detection_timeout_);
+  node_->get_parameter(name + ".docking_point_x_offset", docking_point_x_offset_);
+  node_->get_parameter(name + ".docking_point_y_offset", docking_point_y_offset_);
+  double legacy_external_detection_translation_x = default_docking_point_x_offset;
+  double legacy_external_detection_translation_y = default_docking_point_y_offset;
   node_->get_parameter(
-    name + ".external_detection_translation_x", external_detection_translation_x_);
+    name + ".external_detection_translation_x", legacy_external_detection_translation_x);
   node_->get_parameter(
-    name + ".external_detection_translation_y", external_detection_translation_y_);
+    name + ".external_detection_translation_y", legacy_external_detection_translation_y);
+  if (
+    std::fabs(docking_point_x_offset_ - default_docking_point_x_offset) < 1e-6 &&
+    std::fabs(docking_point_y_offset_ - default_docking_point_y_offset) < 1e-6 &&
+    (
+      std::fabs(legacy_external_detection_translation_x - default_docking_point_x_offset) > 1e-6 ||
+      std::fabs(legacy_external_detection_translation_y - default_docking_point_y_offset) > 1e-6))
+  {
+    docking_point_x_offset_ = legacy_external_detection_translation_x;
+    docking_point_y_offset_ = legacy_external_detection_translation_y;
+    RCLCPP_WARN(
+      node_->get_logger(),
+      "Parameters '%s.external_detection_translation_x/y' are deprecated. "
+      "Please use '%s.docking_point_x_offset/y_offset'.",
+      name.c_str(), name.c_str());
+  }
   double yaw, pitch, roll;
   node_->get_parameter(name + ".external_detection_rotation_yaw", yaw);
   node_->get_parameter(name + ".external_detection_rotation_pitch", pitch);
@@ -261,14 +288,14 @@ bool SimpleChargingDock::getRefinedPose(geometry_msgs::msg::PoseStamped & pose)
   orientation.setEuler(0.0, 0.0, tf2::getYaw(just_orientation.pose.orientation));
   dock_pose_.pose.orientation = tf2::toMsg(orientation);
 
-  // Construct dock_pose_ by applying translation/rotation
+  // Construct dock_pose_ from detected ArUco center and configurable XY offsets.
   dock_pose_.header = detected.header;
   dock_pose_.pose.position = detected.pose.position;
   const double yaw = tf2::getYaw(dock_pose_.pose.orientation);
-  dock_pose_.pose.position.x += cos(yaw) * external_detection_translation_x_ -
-    sin(yaw) * external_detection_translation_y_;
-  dock_pose_.pose.position.y += sin(yaw) * external_detection_translation_x_ +
-    cos(yaw) * external_detection_translation_y_;
+  dock_pose_.pose.position.x += cos(yaw) * docking_point_x_offset_ -
+    sin(yaw) * docking_point_y_offset_;
+  dock_pose_.pose.position.y += sin(yaw) * docking_point_x_offset_ +
+    cos(yaw) * docking_point_y_offset_;
   dock_pose_.pose.position.z = 0.0;
 
   // Publish & return dock pose for debugging purposes
