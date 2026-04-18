@@ -12,6 +12,7 @@ find_package(btcpp_ros2_interfaces REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(nav2_msgs REQUIRED)
+find_package(opennav_docking_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(yaml-cpp REQUIRED)
@@ -25,6 +26,7 @@ set(THIS_PACKAGE_DEPS
   btcpp_ros2_interfaces
   rclcpp_action
   nav2_msgs
+  opennav_docking_msgs
   tf2
   tf2_geometry_msgs
   yaml-cpp

@@ -5,6 +5,8 @@
 #include "std_msgs/msg/bool.hpp"
 #include "std_msgs/msg/int32.hpp"
 #include "btcpp_ros2_interfaces/srv/start_up_srv.hpp"
+#include "rclcpp_action/rclcpp_action.hpp"
+#include "opennav_docking_msgs/action/dock_robot.hpp"
 #include "ninja-sima-main/ninja-sima-main_nav_to_pose.hpp"
 #include <vector>
 #include <queue>
@@ -56,6 +58,12 @@ private:
     void MissionStatus_callback(const std_msgs::msg::Int32::SharedPtr msg);
 
     void on_goal_reached(bool success);
+    void start_docking(const WaypointTask& dock_task);
+    void dock_goal_response_callback(const rclcpp_action::ClientGoalHandle<opennav_docking_msgs::action::DockRobot>::SharedPtr & goal_handle);
+    void dock_feedback_callback(
+        rclcpp_action::ClientGoalHandle<opennav_docking_msgs::action::DockRobot>::SharedPtr,
+        const std::shared_ptr<const opennav_docking_msgs::action::DockRobot::Feedback> feedback);
+    void dock_result_callback(const rclcpp_action::ClientGoalHandle<opennav_docking_msgs::action::DockRobot>::WrappedResult & result);
     
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr ReadyCheck_sub_;
@@ -64,11 +72,13 @@ private:
     rclcpp::Client<btcpp_ros2_interfaces::srv::StartUpSrv>::SharedPtr StartUp_client_;
     rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr MissionType_pub_;
     rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr MissionStatus_sub_;
+    rclcpp_action::Client<opennav_docking_msgs::action::DockRobot>::SharedPtr dock_robot_client_;
     
     std::shared_ptr<NinjaSimaMainNavToPose> nav_to_pose_;
 
     std::queue<WaypointTask> task_queue_;
     bool is_task_running_;
+    bool is_docking_;
     int32_t current_running_task_num_;
     int32_t prev_task_;
     int32_t mission_type_now_;
