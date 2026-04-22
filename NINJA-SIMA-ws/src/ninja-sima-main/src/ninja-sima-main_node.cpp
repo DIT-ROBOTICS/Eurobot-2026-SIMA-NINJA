@@ -8,8 +8,8 @@
 
 using namespace std::chrono_literals;
 
-NinjaSimaMain::NinjaSimaMain() : Node("ninja_sima_main_node"), is_task_running_(false), current_running_task_num_(-1){
-    state_ = NinjaSimaMainState::START;
+NinjaSimaMain::NinjaSimaMain() : Node("ninja_sima_main_node"), is_task_running_(false), is_docking_(false), current_running_task_num_(-1){
+    state_ = NinjaSimaMainState::INIT;
     current_waypoint_index_ = 0;
 
     init_param();
@@ -27,6 +27,9 @@ NinjaSimaMain::NinjaSimaMain() : Node("ninja_sima_main_node"), is_task_running_(
     MissionStatus_sub_ = this->create_subscription<std_msgs::msg::Int32>(
         "/mission_status", 10,
         std::bind(&NinjaSimaMain::MissionStatus_callback, this, std::placeholders::_1));
+    dock_robot_client_ = rclcpp_action::create_client<opennav_docking_msgs::action::DockRobot>(
+        this,
+        "/dock_robot");
     
     nav_to_pose_ = std::make_shared<NinjaSimaMainNavToPose>(this);
     nav_to_pose_->set_goal_reached_callback(
@@ -35,6 +38,7 @@ NinjaSimaMain::NinjaSimaMain() : Node("ninja_sima_main_node"), is_task_running_(
 
     timer_ = this->create_wall_timer(
         20ms, std::bind(&NinjaSimaMain::timer_callback, this));
+    state_ = NinjaSimaMainState::READY;
 }
 
 NinjaSimaMain::~NinjaSimaMain() {
@@ -144,13 +148,19 @@ void NinjaSimaMain::ninja_READY() {
 
 void NinjaSimaMain::ninja_START() {
     /* Do all the mission until all things being done */
-    if (!nav_to_pose_->is_navigating() && !is_task_running_) {
+    if (!nav_to_pose_->is_navigating() && !is_task_running_ && !is_docking_) {
         if (!task_queue_.empty()) {
             WaypointTask wp = task_queue_.front();
-            RCLCPP_INFO(this->get_logger(), "Sending waypoint %s: x=%.2f, y=%.2f, theta=%.2f",
-                        wp.name.c_str(), wp.x, wp.y, wp.yaw);
-            
-            nav_to_pose_->move_to_pose(wp.x, wp.y, wp.yaw);
+
+            if (wp.task_type == "docking") {
+                RCLCPP_INFO(this->get_logger(), "Sending docking goal %s: x=%.2f, y=%.2f, theta=%.2f",
+                            wp.name.c_str(), wp.x, wp.y, wp.yaw);
+                start_docking(wp);
+            } else {
+                RCLCPP_INFO(this->get_logger(), "Sending waypoint %s: x=%.2f, y=%.2f, theta=%.2f",
+                            wp.name.c_str(), wp.x, wp.y, wp.yaw);
+                nav_to_pose_->move_to_pose(wp.x, wp.y, wp.yaw);
+            }
         } else {
             RCLCPP_INFO_ONCE(this->get_logger(), "All tasks have been completed.");
         }
@@ -211,20 +221,102 @@ void NinjaSimaMain::MissionStatus_callback(const std_msgs::msg::Int32::SharedPtr
 void NinjaSimaMain::on_goal_reached(bool success) {
     if (success && !task_queue_.empty()) {
         WaypointTask completed_task = task_queue_.front();
-        task_queue_.pop(); // 導航成功，從 queue 移除
-        
-        if (completed_task.task_type == "docking") {
-            // 如果 type 是 docking，執行 task_num
-            RCLCPP_INFO(this->get_logger(), "Goal reached. Task type is 'docking'. Preparing to execute task %d.", completed_task.task_num);
-            is_task_running_ = true;
-            execute_task(completed_task.task_num);
-        } else if (completed_task.task_type == "goto") {
-            // 如果是 goto 就單純忽略 task_num
+        task_queue_.pop();
+
+        if (completed_task.task_type == "goto") {
             RCLCPP_INFO(this->get_logger(), "Goal reached. Task type is 'goto'. Moving to next task.");
+        } else {
+            RCLCPP_WARN(this->get_logger(), "Navigation callback reached for non-goto task type '%s'.", completed_task.task_type.c_str());
         }
     } else if (!success) {
         RCLCPP_WARN(this->get_logger(), "Navigation Failed! Handling error needed.");
     }
+}
+
+void NinjaSimaMain::start_docking(const WaypointTask& dock_task) {
+    if (!dock_robot_client_->action_server_is_ready()) {
+        RCLCPP_ERROR(this->get_logger(), "DockRobot action server '/dock_robot' is not ready.");
+        is_docking_ = false;
+        return;
+    }
+
+    auto goal_msg = opennav_docking_msgs::action::DockRobot::Goal();
+    goal_msg.use_dock_id = false;
+    goal_msg.dock_type = "dock";
+    goal_msg.navigate_to_staging_pose = true;
+
+    goal_msg.dock_pose.header.frame_id = "map";
+    goal_msg.dock_pose.header.stamp = this->now();
+    goal_msg.dock_pose.pose.position.x = dock_task.x;
+    goal_msg.dock_pose.pose.position.y = dock_task.y;
+    goal_msg.dock_pose.pose.position.z = 0.0;
+
+    tf2::Quaternion q;
+    q.setRPY(0.0, 0.0, dock_task.yaw);
+    goal_msg.dock_pose.pose.orientation.x = q.x();
+    goal_msg.dock_pose.pose.orientation.y = q.y();
+    goal_msg.dock_pose.pose.orientation.z = q.z();
+    goal_msg.dock_pose.pose.orientation.w = q.w();
+
+    auto send_goal_options = rclcpp_action::Client<opennav_docking_msgs::action::DockRobot>::SendGoalOptions();
+    send_goal_options.goal_response_callback =
+        std::bind(&NinjaSimaMain::dock_goal_response_callback, this, std::placeholders::_1);
+    send_goal_options.feedback_callback =
+        std::bind(&NinjaSimaMain::dock_feedback_callback, this, std::placeholders::_1, std::placeholders::_2);
+    send_goal_options.result_callback =
+        std::bind(&NinjaSimaMain::dock_result_callback, this, std::placeholders::_1);
+
+    dock_robot_client_->async_send_goal(goal_msg, send_goal_options);
+    is_docking_ = true;
+
+    RCLCPP_INFO(this->get_logger(), "DockRobot goal sent: type=%s, use_dock_id=%s, navigate_to_staging_pose=%s",
+                goal_msg.dock_type.c_str(),
+                goal_msg.use_dock_id ? "true" : "false",
+                goal_msg.navigate_to_staging_pose ? "true" : "false");
+}
+
+void NinjaSimaMain::dock_goal_response_callback(
+    const rclcpp_action::ClientGoalHandle<opennav_docking_msgs::action::DockRobot>::SharedPtr & goal_handle) {
+    if (!goal_handle) {
+        RCLCPP_ERROR(this->get_logger(), "DockRobot goal was rejected by server.");
+        is_docking_ = false;
+    } else {
+        RCLCPP_INFO(this->get_logger(), "DockRobot goal accepted by server.");
+    }
+}
+
+void NinjaSimaMain::dock_feedback_callback(
+    rclcpp_action::ClientGoalHandle<opennav_docking_msgs::action::DockRobot>::SharedPtr,
+    const std::shared_ptr<const opennav_docking_msgs::action::DockRobot::Feedback> feedback) {
+    RCLCPP_INFO(this->get_logger(), "Docking feedback: state=%u, retries=%u",
+                feedback->state, feedback->num_retries);
+}
+
+void NinjaSimaMain::dock_result_callback(
+    const rclcpp_action::ClientGoalHandle<opennav_docking_msgs::action::DockRobot>::WrappedResult & result) {
+    is_docking_ = false;
+
+    if (result.code != rclcpp_action::ResultCode::SUCCEEDED || !result.result || !result.result->success) {
+        const uint16_t error_code = result.result ? result.result->error_code : 999;
+        RCLCPP_ERROR(this->get_logger(), "DockRobot failed. result_code=%d, error_code=%u",
+                     static_cast<int>(result.code), error_code);
+        return;
+    }
+
+    if (task_queue_.empty()) {
+        RCLCPP_WARN(this->get_logger(), "DockRobot succeeded but task queue is empty.");
+        return;
+    }
+
+    WaypointTask completed_task = task_queue_.front();
+    if (completed_task.task_type != "docking") {
+        RCLCPP_WARN(this->get_logger(), "DockRobot succeeded but front task type is '%s'.", completed_task.task_type.c_str());
+        return;
+    }
+
+    task_queue_.pop();
+    RCLCPP_INFO(this->get_logger(), "DockRobot succeeded. Executing mission task %d.", completed_task.task_num);
+    execute_task(completed_task.task_num);
 }
 
 int main(int argc, char * argv[])
