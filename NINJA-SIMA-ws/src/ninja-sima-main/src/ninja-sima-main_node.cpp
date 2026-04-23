@@ -1,14 +1,12 @@
 #include "ninja-sima-main/ninja-sima-main_node.hpp"
 #include <chrono>
-#include <tf2/LinearMath/Quaternion.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <yaml-cpp/yaml.h>
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <filesystem>
 
 using namespace std::chrono_literals;
 
-NinjaSimaMain::NinjaSimaMain() : Node("ninja_sima_main_node"), is_task_running_(false), is_docking_(false), current_running_task_num_(-1){
+NinjaSimaMain::NinjaSimaMain() : Node("ninja_sima_main_node"), is_task_running_(false), current_running_task_num_(-1){
     state_ = NinjaSimaMainState::INIT;
     current_waypoint_index_ = 0;
 
@@ -27,13 +25,14 @@ NinjaSimaMain::NinjaSimaMain() : Node("ninja_sima_main_node"), is_task_running_(
     MissionStatus_sub_ = this->create_subscription<std_msgs::msg::Int32>(
         "/mission_status", 10,
         std::bind(&NinjaSimaMain::MissionStatus_callback, this, std::placeholders::_1));
-    dock_robot_client_ = rclcpp_action::create_client<opennav_docking_msgs::action::DockRobot>(
-        this,
-        "/dock_robot");
     
     nav_to_pose_ = std::make_shared<NinjaSimaMainNavToPose>(this);
     nav_to_pose_->set_goal_reached_callback(
         std::bind(&NinjaSimaMain::on_goal_reached, this, std::placeholders::_1)
+    );
+    docking_ = std::make_shared<NinjaSimaMainDocking>(this);
+    docking_->set_result_callback(
+        std::bind(&NinjaSimaMain::on_docking_completed, this, std::placeholders::_1)
     );
 
     timer_ = this->create_wall_timer(
@@ -137,25 +136,23 @@ void NinjaSimaMain::state_transmit() {
 }
 
 void NinjaSimaMain::ninja_INIT() {
-    RCLCPP_INFO(this->get_logger(), "STATE: %d", static_cast<int>(state_));
+    // RCLCPP_INFO(this->get_logger(), "STATE: %d", static_cast<int>(state_));
     /* Get the plan code and get plan file */
 }
 
 void NinjaSimaMain::ninja_READY() {
-    RCLCPP_INFO(this->get_logger(), "STATE: %d", static_cast<int>(state_));
+    // RCLCPP_INFO(this->get_logger(), "STATE: %d", static_cast<int>(state_));
     /* Wait for the start signal */
 }
 
 void NinjaSimaMain::ninja_START() {
     /* Do all the mission until all things being done */
-    if (!nav_to_pose_->is_navigating() && !is_task_running_ && !is_docking_) {
+    if (!nav_to_pose_->is_navigating() && !is_task_running_ && !docking_->is_docking()) {
         if (!task_queue_.empty()) {
             WaypointTask wp = task_queue_.front();
 
             if (wp.task_type == "docking") {
-                RCLCPP_INFO(this->get_logger(), "Sending docking goal %s: x=%.2f, y=%.2f, theta=%.2f",
-                            wp.name.c_str(), wp.x, wp.y, wp.yaw);
-                start_docking(wp);
+                docking_->start_docking(wp.name, wp.x, wp.y, wp.yaw);
             } else {
                 RCLCPP_INFO(this->get_logger(), "Sending waypoint %s: x=%.2f, y=%.2f, theta=%.2f",
                             wp.name.c_str(), wp.x, wp.y, wp.yaw);
@@ -168,7 +165,7 @@ void NinjaSimaMain::ninja_START() {
 }
 
 void NinjaSimaMain::ninja_STOP() {
-    RCLCPP_INFO(this->get_logger(), "STATE: %d", static_cast<int>(state_));
+    // RCLCPP_INFO(this->get_logger(), "STATE: %d", static_cast<int>(state_));
     /* Do the final actuator motion and stop all the moving motion */
 }
 
@@ -233,73 +230,9 @@ void NinjaSimaMain::on_goal_reached(bool success) {
     }
 }
 
-void NinjaSimaMain::start_docking(const WaypointTask& dock_task) {
-    if (!dock_robot_client_->action_server_is_ready()) {
-        RCLCPP_ERROR(this->get_logger(), "DockRobot action server '/dock_robot' is not ready.");
-        is_docking_ = false;
-        return;
-    }
-
-    auto goal_msg = opennav_docking_msgs::action::DockRobot::Goal();
-    goal_msg.use_dock_id = false;
-    goal_msg.dock_type = "dock";
-    goal_msg.navigate_to_staging_pose = true;
-
-    goal_msg.dock_pose.header.frame_id = "map";
-    goal_msg.dock_pose.header.stamp = this->now();
-    goal_msg.dock_pose.pose.position.x = dock_task.x;
-    goal_msg.dock_pose.pose.position.y = dock_task.y;
-    goal_msg.dock_pose.pose.position.z = 0.0;
-
-    tf2::Quaternion q;
-    q.setRPY(0.0, 0.0, dock_task.yaw);
-    goal_msg.dock_pose.pose.orientation.x = q.x();
-    goal_msg.dock_pose.pose.orientation.y = q.y();
-    goal_msg.dock_pose.pose.orientation.z = q.z();
-    goal_msg.dock_pose.pose.orientation.w = q.w();
-
-    auto send_goal_options = rclcpp_action::Client<opennav_docking_msgs::action::DockRobot>::SendGoalOptions();
-    send_goal_options.goal_response_callback =
-        std::bind(&NinjaSimaMain::dock_goal_response_callback, this, std::placeholders::_1);
-    send_goal_options.feedback_callback =
-        std::bind(&NinjaSimaMain::dock_feedback_callback, this, std::placeholders::_1, std::placeholders::_2);
-    send_goal_options.result_callback =
-        std::bind(&NinjaSimaMain::dock_result_callback, this, std::placeholders::_1);
-
-    dock_robot_client_->async_send_goal(goal_msg, send_goal_options);
-    is_docking_ = true;
-
-    RCLCPP_INFO(this->get_logger(), "DockRobot goal sent: type=%s, use_dock_id=%s, navigate_to_staging_pose=%s",
-                goal_msg.dock_type.c_str(),
-                goal_msg.use_dock_id ? "true" : "false",
-                goal_msg.navigate_to_staging_pose ? "true" : "false");
-}
-
-void NinjaSimaMain::dock_goal_response_callback(
-    const rclcpp_action::ClientGoalHandle<opennav_docking_msgs::action::DockRobot>::SharedPtr & goal_handle) {
-    if (!goal_handle) {
-        RCLCPP_ERROR(this->get_logger(), "DockRobot goal was rejected by server.");
-        is_docking_ = false;
-    } else {
-        RCLCPP_INFO(this->get_logger(), "DockRobot goal accepted by server.");
-    }
-}
-
-void NinjaSimaMain::dock_feedback_callback(
-    rclcpp_action::ClientGoalHandle<opennav_docking_msgs::action::DockRobot>::SharedPtr,
-    const std::shared_ptr<const opennav_docking_msgs::action::DockRobot::Feedback> feedback) {
-    RCLCPP_INFO(this->get_logger(), "Docking feedback: state=%u, retries=%u",
-                feedback->state, feedback->num_retries);
-}
-
-void NinjaSimaMain::dock_result_callback(
-    const rclcpp_action::ClientGoalHandle<opennav_docking_msgs::action::DockRobot>::WrappedResult & result) {
-    is_docking_ = false;
-
-    if (result.code != rclcpp_action::ResultCode::SUCCEEDED || !result.result || !result.result->success) {
-        const uint16_t error_code = result.result ? result.result->error_code : 999;
-        RCLCPP_ERROR(this->get_logger(), "DockRobot failed. result_code=%d, error_code=%u",
-                     static_cast<int>(result.code), error_code);
+void NinjaSimaMain::on_docking_completed(bool success) {
+    if (!success) {
+        RCLCPP_ERROR(this->get_logger(), "Docking failed.");
         return;
     }
 

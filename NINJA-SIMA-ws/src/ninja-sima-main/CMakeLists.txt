@@ -40,6 +40,7 @@ include_directories(
 add_executable(ninja_sima_main_node 
   src/ninja-sima-main_node.cpp
   src/ninja-sima-main_nav_to_pose.cpp
+  src/ninja-sima-main_docking.cpp
 )
 target_link_libraries(ninja_sima_main_node yaml-cpp)
 ament_target_dependencies(ninja_sima_main_node ${THIS_PACKAGE_DEPS})

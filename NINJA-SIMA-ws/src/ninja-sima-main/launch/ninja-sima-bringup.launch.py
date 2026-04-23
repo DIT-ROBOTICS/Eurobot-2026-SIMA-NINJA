@@ -12,6 +12,7 @@ def generate_launch_description():
 	mode = LaunchConfiguration('mode')
 
 	navigation2_run_dir = get_package_share_directory('navigation2_run')
+	domain_bridge_dir = get_package_share_directory('domain_bridge')
 	localization_real_dir = get_package_share_directory('sima-localization-real')
 	localization_sim_dir = get_package_share_directory('sima-localization-sim')
 	ninja_sima_main_dir = get_package_share_directory('ninja-sima-main')
@@ -26,6 +27,12 @@ def generate_launch_description():
 	nav2_launch = IncludeLaunchDescription(
 		PythonLaunchDescriptionSource(
 			os.path.join(navigation2_run_dir, 'launch', 'real_launch.py')
+		)
+	)
+
+	domain_bridge_launch = IncludeLaunchDescription(
+		PythonLaunchDescriptionSource(
+			os.path.join(domain_bridge_dir, 'launch', 'domain_bridge.launch.py')
 		)
 	)
 
@@ -52,6 +59,7 @@ def generate_launch_description():
 	return LaunchDescription([
 		declare_mode_arg,
 		nav2_launch,
+		domain_bridge_launch,
 		localization_real_launch,
 		localization_sim_launch,
 		ninja_sima_main_launch,
