@@ -189,20 +189,70 @@ void SimpleChargingDock::configure(
   staging_pose_pub_ = node_->create_publisher<geometry_msgs::msg::PoseStamped>("staging_pose", 1);
 }
 
+// geometry_msgs::msg::PoseStamped SimpleChargingDock::getStagingPose(
+//   const geometry_msgs::msg::Pose & pose, const std::string & frame, const std::string & dock_type)
+// {
+//   // ** If not using detection, set the dock pose as the given dock pose estimate
+//   if (!use_external_detection_pose_) {
+//     // This gets called at the start of docking
+//     // Reset our internally tracked dock pose
+//     dock_pose_.header.frame_id = frame;
+//     dock_pose_.header.stamp = node_->now();
+//     dock_pose_.pose = pose;
+//     detected_dock_pose_prev_.header.frame_id = frame;
+//     detected_dock_pose_prev_.header.stamp = dock_pose_.header.stamp;
+//     detected_dock_pose_prev_.pose = pose;
+//   }
+
+//   // Compute the staging pose with given offsets
+//   const double yaw = tf2::getYaw(pose.orientation);
+//   geometry_msgs::msg::PoseStamped staging_pose;
+//   staging_pose.header.frame_id = frame;
+//   staging_pose.header.stamp = node_->now();
+//   staging_pose.pose = pose;
+//   staging_pose.pose.orientation = pose.orientation;
+
+//   //** Apply x and y offsets
+//   if(use_dynamic_offset_) {
+//     nav_type_selector_->setType(dock_type, offset_direction_, staging_pose, pose.position.z);
+//   } else {
+//     staging_pose.pose.position.x += cos(yaw) * staging_x_offset_ - sin(yaw) * staging_y_offset_;
+//     staging_pose.pose.position.y += sin(yaw) * staging_x_offset_ + cos(yaw) * staging_y_offset_;
+
+//     tf2::Quaternion orientation;
+//     orientation.setEuler(0.0, 0.0, yaw + staging_yaw_offset_);
+//     staging_pose.pose.orientation = tf2::toMsg(orientation);
+//   }
+
+//   // Publish staging pose for debugging purposes
+
+//   staging_pose_pub_->publish(staging_pose);
+
+// return staging_pose;
+
+// }
+
 geometry_msgs::msg::PoseStamped SimpleChargingDock::getStagingPose(
   const geometry_msgs::msg::Pose & pose, const std::string & frame, const std::string & dock_type)
 {
-  // ** If not using detection, set the dock pose as the given dock pose estimate
-  if (!use_external_detection_pose_) {
-    // This gets called at the start of docking
-    // Reset our internally tracked dock pose
-    // dock_pose_.header.frame_id = frame;
-    // dock_pose_.pose = pose;
-    detected_dock_pose_prev_.header.frame_id = frame;
-    detected_dock_pose_prev_.pose = pose;
-  }
+  // ==========================================
+  // 修改：移除 if (!use_external_detection_pose_) 的判斷。
+  // 無論相機現在有沒有看到東西，只要是「新的任務開始」，
+  // 就強制覆寫我們內部追蹤的 dock_pose_ 與歷史紀錄！
+  // ==========================================
+  dock_pose_.header.frame_id = frame;
+  dock_pose_.header.stamp = node_->now();
+  dock_pose_.pose = pose;
 
-  // Compute the staging pose with given offsets
+  detected_dock_pose_prev_.header.frame_id = frame;
+  detected_dock_pose_prev_.header.stamp = dock_pose_.header.stamp;
+  detected_dock_pose_prev_.pose = pose;
+
+  // 重要：強制將感測器標籤歸零。
+  // 避免機器人在剛起步時，誤拿「上一個點的殘影」當作這次的目標
+  use_external_detection_pose_ = false;
+
+  // 計算預備點 (Staging pose) 的邏輯保持不變...
   const double yaw = tf2::getYaw(pose.orientation);
   geometry_msgs::msg::PoseStamped staging_pose;
   staging_pose.header.frame_id = frame;
@@ -210,7 +260,6 @@ geometry_msgs::msg::PoseStamped SimpleChargingDock::getStagingPose(
   staging_pose.pose = pose;
   staging_pose.pose.orientation = pose.orientation;
 
-  //** Apply x and y offsets
   if(use_dynamic_offset_) {
     nav_type_selector_->setType(dock_type, offset_direction_, staging_pose, pose.position.z);
   } else {
@@ -222,23 +271,21 @@ geometry_msgs::msg::PoseStamped SimpleChargingDock::getStagingPose(
     staging_pose.pose.orientation = tf2::toMsg(orientation);
   }
 
-  // Publish staging pose for debugging purposes
-
   staging_pose_pub_->publish(staging_pose);
 
-return staging_pose;
-
+  return staging_pose;
 }
 
 bool SimpleChargingDock::getRefinedPose(geometry_msgs::msg::PoseStamped & pose)
 {
   // ** If using not detection, set the dock pose to the static fixed-frame version
   if (!use_external_detection_pose_) {
-    if(detected_dock_pose_prev_.header.frame_id.empty()) {
+    if (dock_pose_.header.frame_id.empty()) {
       RCLCPP_WARN(node_->get_logger(), "No frame for detected dock pose");
+      return false;
     }
-    dock_pose_pub_->publish(detected_dock_pose_prev_);
-    dock_pose_ = detected_dock_pose_prev_;
+    dock_pose_pub_->publish(dock_pose_);
+    pose = dock_pose_;
     return true;
   }
 
@@ -249,8 +296,12 @@ bool SimpleChargingDock::getRefinedPose(geometry_msgs::msg::PoseStamped & pose)
   auto timeout = rclcpp::Duration::from_seconds(external_detection_timeout_);
   if (node_->now() - detected.header.stamp > timeout) {
     RCLCPP_WARN(node_->get_logger(), "Lost detection or did not detect: timeout exceeded");
-    dock_pose_pub_->publish(detected_dock_pose_prev_);
-    dock_pose_ = detected_dock_pose_prev_;
+    if (dock_pose_.header.frame_id.empty()) {
+      RCLCPP_WARN(node_->get_logger(), "No fallback dock pose available");
+      return false;
+    }
+    dock_pose_pub_->publish(dock_pose_);
+    pose = dock_pose_;
     return true;
   }
 
@@ -291,12 +342,61 @@ bool SimpleChargingDock::getRefinedPose(geometry_msgs::msg::PoseStamped & pose)
   // Construct dock_pose_ from detected ArUco center and configurable XY offsets.
   dock_pose_.header = detected.header;
   dock_pose_.pose.position = detected.pose.position;
-  const double yaw = tf2::getYaw(dock_pose_.pose.orientation);
-  dock_pose_.pose.position.x += cos(yaw) * docking_point_x_offset_ -
-    sin(yaw) * docking_point_y_offset_;
-  dock_pose_.pose.position.y += sin(yaw) * docking_point_x_offset_ +
-    cos(yaw) * docking_point_y_offset_;
+
+  // Resolve robot position in marker local frame (inverse transform) to infer
+  // the correct signs for x/y docking offsets across all approach quadrants.
+  double signed_x_offset = docking_point_x_offset_;
+  double signed_y_offset = docking_point_y_offset_;
+  geometry_msgs::msg::PoseStamped base_pose;
+  base_pose.header.stamp = rclcpp::Time(0);
+  base_pose.header.frame_id = base_frame_;
+  base_pose.pose.orientation.w = 1.0;
+  try {
+    tf2_buffer_->transform(base_pose, base_pose, dock_pose_.header.frame_id);
+
+    tf2::Transform map_to_marker;
+    tf2::Transform map_to_robot;
+    tf2::fromMsg(dock_pose_.pose, map_to_marker);
+    tf2::fromMsg(base_pose.pose, map_to_robot);
+
+    const tf2::Transform marker_to_robot = map_to_marker.inverseTimes(map_to_robot);
+    signed_x_offset = std::copysign(
+      std::fabs(docking_point_x_offset_), marker_to_robot.getOrigin().x());
+    signed_y_offset = std::copysign(
+      std::fabs(docking_point_y_offset_), marker_to_robot.getOrigin().y());
+  } catch (const tf2::TransformException & ex) {
+    RCLCPP_WARN(
+      node_->get_logger(),
+      "Failed to transform base pose to '%s', fallback to configured offset signs",
+      dock_pose_.header.frame_id.c_str());
+  }
+
+  // Transform the local target point back into the global/map frame.
+  tf2::Transform map_to_marker;
+  tf2::fromMsg(dock_pose_.pose, map_to_marker);
+  const tf2::Vector3 local_target_in_marker(signed_x_offset, signed_y_offset, 0.0);
+  const tf2::Vector3 target_in_map = map_to_marker * local_target_in_marker;
+  dock_pose_.pose.position.x = target_in_map.x();
+  dock_pose_.pose.position.y = target_in_map.y();
   dock_pose_.pose.position.z = 0.0;
+
+  // ==========================================
+  // 新增：動態計算朝向 (Orientation)
+  // ==========================================
+  // 1. 若你想讓機器的「車頭 (+x)」朝向 Marker 中心 (正向拿取)：
+  // 向量方向：從 dock_pose 指向 Marker 中心
+  // double target_yaw = std::atan2(detected.pose.position.y - dock_pose_.pose.position.y,
+  //                                detected.pose.position.x - dock_pose_.pose.position.x);
+
+  // 2. 若你想讓機器的「車尾 (-x)」朝向 Marker 中心 (倒車入站/拿取)：
+  // 向量方向：從 Marker 中心指向 dock_pose
+  double target_yaw = std::atan2(dock_pose_.pose.position.y - detected.pose.position.y,
+                                 dock_pose_.pose.position.x - detected.pose.position.x);
+
+  // 將計算出的 Yaw 轉回 Quaternion
+  tf2::Quaternion dynamic_orientation;
+  dynamic_orientation.setRPY(0.0, 0.0, target_yaw);
+  dock_pose_.pose.orientation = tf2::toMsg(dynamic_orientation);
 
   // Publish & return dock pose for debugging purposes
   dock_pose_pub_->publish(dock_pose_);
