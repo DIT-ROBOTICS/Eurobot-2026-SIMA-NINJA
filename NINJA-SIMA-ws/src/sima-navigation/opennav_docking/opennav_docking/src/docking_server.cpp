@@ -446,11 +446,11 @@ bool DockingServer::approachDock(Dock * dock, geometry_msgs::msg::PoseStamped & 
     }
 
     // Compute if rival is on the way
-    if (controller_->computeIfNeedStop(dock_pose.pose)) {
-      publishZeroVelocity();
-      throw opennav_docking_core::BlockByRival(
-        "Goal blocked by rival, stop the robot");
-    }
+    // if (controller_->computeIfNeedStop(dock_pose.pose)) {
+    //   publishZeroVelocity();
+    //   throw opennav_docking_core::BlockByRival(
+    //     "Goal blocked by rival, stop the robot");
+    // }
 
     vel_publisher_->publish(command);
 
