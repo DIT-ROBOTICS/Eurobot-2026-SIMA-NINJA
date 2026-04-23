@@ -541,7 +541,7 @@ docking_server:
     controller_frequency: 20.0
     initial_perception_timeout: 5.0
     wait_charge_timeout: 5.0
-    dock_approach_timeout: 3.0
+    dock_approach_timeout: 5.0
     max_retries: 0
     base_frame: "base_link"
     fixed_frame: "map"
@@ -553,7 +553,7 @@ docking_server:
     dock_plugins: ["dock"]
     dock:
       plugin: "opennav_docking::SimpleChargingDock"
-      docking_point_x_offset: -0.20
+      docking_point_x_offset: 0.15
       docking_point_y_offset: 0.0
       docking_threshold: 0.005
       use_debounce: true
@@ -562,7 +562,7 @@ docking_server:
       use_dynamic_offset: true
       staging_x_offset: 0.05
       staging_y_offset: 0.05
-      staging_yaw_offset: 1.57
+      staging_yaw_offset: 0.0
       use_battery_status: false
       use_stall_detection: false
       base_frame: "base_link"
