@@ -185,9 +185,23 @@ private:
     const double local_x = dx_global * cos_yaw + dy_global * sin_yaw;
     const double local_y = -dx_global * sin_yaw + dy_global * cos_yaw;
 
+    // const double distance = std::hypot(local_x, local_y);
+    // const double bearing = std::atan2(local_y, local_x);
+    // const bool in_front = local_x > 0.0;
     const double distance = std::hypot(local_x, local_y);
-    const double bearing = std::atan2(local_y, local_x);
-    const bool in_front = local_x > 0.0;
+    
+    // 【修改處】將相機的判定基準軸轉向 -x
+    // 相對於朝向 -x 的相機：前方是機體的 -x，左方是機體的 -y
+    const double cam_front_x = -local_x;
+    const double cam_left_y  = -local_y;
+    
+    // 使用轉換後的視角來計算物體在畫面中的方位角
+    const double bearing = std::atan2(cam_left_y, cam_front_x);
+    
+    // 確保物體在相機的「前方」（也就是機體的後方 local_x < 0.0）
+    const bool in_front = cam_front_x > 0.0;
+
+    
     const bool in_range =
       distance >= detection_min_distance_ && distance <= detection_max_distance_;
     const bool in_fov = std::fabs(bearing) <= half_fov_rad;
