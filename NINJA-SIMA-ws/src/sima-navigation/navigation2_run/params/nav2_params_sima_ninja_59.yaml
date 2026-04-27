@@ -101,8 +101,8 @@ controller_server:
     Precise:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.01
-      yaw_goal_tolerance: 0.05
+      xy_goal_tolerance: 0.02
+      yaw_goal_tolerance: 0.1
       xy_debounce_threshold: 1
       yaw_debounce_threshold: 1
 
@@ -117,8 +117,8 @@ controller_server:
     Loose:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.03
-      yaw_goal_tolerance: 0.07
+      xy_goal_tolerance: 0.02
+      yaw_goal_tolerance: 0.1
       # yaw_goal_tolerance: 3.14
       xy_debounce_threshold: 1
       yaw_debounce_threshold: 1
@@ -157,19 +157,19 @@ controller_server:
       lookahead_dist: 0.4 # How far ahead to look for control force calculation (about 2-3 times the robot length)
 
       # Control gains (similar to PID)
-      k_xy: 1.0
-      k_w: 1.0
+      k_xy: 0.3
+      k_w: 0.2
 
       # Goal behavior
       goal_xy_stop_dist: 0.01
-      goal_heading_switch_dist: 0.3 # When to start adjusting final heading based on distance to goal
+      goal_heading_switch_dist: 0.60 # When to start adjusting final heading based on distance to goal
 
       # Velocity limits (match with your velocity_smoother)
       max_v: 0.4 # Slightly reduced for testing, increase to 1.5 once stable
-      min_v: 0.0
-      max_w: 1.0
+      min_v: -0.2
+      max_w: 2.5
       max_acc_v: 1.0 # Acceleration limits
-      max_acc_w: 2.0  # Angular acceleration limits
+      max_acc_w: 4.0  # Angular acceleration limits
 
       # Costmap related
       max_cost_threshold: 100.0 # Try to plan as long as it's below this cost
@@ -443,33 +443,34 @@ planner_server:
     use_omnidirectional_robot: true
     planner_plugins: ["GridBased"]
     GridBased:
-      plugin: "nav2_navfn_planner/NavfnPlanner"
-      tolerance: 0.02
-      use_astar: True
-      allow_unknown: false
-      # plugin: "nav2_smac_planner/SmacPlanner2D"
+      # plugin: "nav2_navfn_planner/NavfnPlanner"
       # tolerance: 0.02
-      # use_astar: true
+      # use_astar: True
       # allow_unknown: false
 
-      # cost_travel_multiplier: 2.0 # larger values -> more obstacle avoidance
-      # downsample_costmap: false # set to true to downsample costmap for planning
-      # downsampling_factor: 4 # factor by which to downsample costmap (example 2 -> half size in each dimension)
-      # debug_visualizations: false # set to true to enable visualizations in Rviz
-      # # to improve performance, set to true to enable smac planner to use
-      # smooth_path: true
-      # smooth_path_weight: 0.1
-      # smooth_path_iterations: 50
-      # smooth_path_tolerance: 1e-6
-      # smoother_max_iterations: 10
-      # smoother_on_update: True
-      # smoother_do_refinement: True
-      # # model parameters
-      # motion_model_for_search: "DIFF" # "DIFF" or "OMNI"
-      # cost_penalty: 5.0 # penalty for too close to obstacles
-      # # no need to change
-      # max_iterations: 20000
-      # max_on_approach_iterations: 1000
+      plugin: "nav2_smac_planner/SmacPlanner2D"
+      tolerance: 0.02
+      use_astar: true
+      allow_unknown: false
+
+      cost_travel_multiplier: 2.0 # larger values -> more obstacle avoidance
+      downsample_costmap: false # set to true to downsample costmap for planning
+      downsampling_factor: 4 # factor by which to downsample costmap (example 2 -> half size in each dimension)
+      debug_visualizations: false # set to true to enable visualizations in Rviz
+      # to improve performance, set to true to enable smac planner to use
+      smooth_path: true
+      smooth_path_weight: 0.1
+      smooth_path_iterations: 50
+      smooth_path_tolerance: 1e-6
+      smoother_max_iterations: 10
+      smoother_on_update: True
+      smoother_do_refinement: True
+      # model parameters
+      motion_model_for_search: "OMNI" # "DIFF" or "OMNI"
+      cost_penalty: 50.0 # penalty for too close to obstacles
+      # no need to change
+      max_iterations: 20000
+      max_on_approach_iterations: 1000
 
 smoother_server:
   ros__parameters:
@@ -527,10 +528,10 @@ velocity_smoother:
     smoothing_frequency: 20.0
     scale_velocities: False
     feedback: "OPEN_LOOP"
-    max_velocity: [1.1, 1.1, 12.0]
-    min_velocity: [-1.1, -1.1, -12.0]
-    max_accel: [3.3, 3.3, 120.0]
-    max_decel: [-4.4, -4.4, -120.0]
+    max_velocity: [0.4, 0.4, 3.0]
+    min_velocity: [-0.4, -0.4, -3.0]
+    max_accel: [0.2, 0.2, 120.0]
+    max_decel: [-4.0, -4.0, -120.0]
     odom_topic: "/odom/wheel"
     odom_duration: 0.1
     deadband_velocity: [0.0, 0.0, 0.0]
@@ -553,15 +554,15 @@ docking_server:
     dock_plugins: ["dock"]
     dock:
       plugin: "opennav_docking::SimpleChargingDock"
-      docking_point_x_offset: 0.15
+      docking_point_x_offset: 0.05
       docking_point_y_offset: 0.0
       docking_threshold: 0.005
       use_debounce: true
       xy_debounce_threshold: 2
       yaw_debounce_threshold: 2
       use_dynamic_offset: true
-      staging_x_offset: 0.05
-      staging_y_offset: 0.05
+      staging_x_offset: 0.0
+      staging_y_offset: 0.0
       staging_yaw_offset: 0.0
       use_battery_status: false
       use_stall_detection: false
@@ -578,16 +579,16 @@ docking_server:
     controllers: ["Ordinary", "Gentle", "Rush"]
 
     Ordinary:
-      max_linear_vel: 0.3
+      max_linear_vel: 0.1
       min_linear_vel: 0.0
-      linear_kp_accel_vel: 0.5
+      linear_kp_accel_vel: 0.05
       linear_ki_accel_vel: 0.1
       linear_kp_decel_dis: 3.0
       angular_kp: 4.0
       deceleration_distance: 0.05
       reserved_distance: 0.0
-      stop_degree: 120.0
-      rival_radius: 0.44
+      stop_degree: 0.01
+      rival_radius: 0.01
 
     Gentle:
       max_linear_vel: 0.3
@@ -598,7 +599,7 @@ docking_server:
       angular_kp: 4.0
       deceleration_distance: 0.1
       reserved_distance: 0.0
-      stop_degree: 120.0
+      stop_degree: 0.01
       rival_radius: 0.44
 
     Rush:
