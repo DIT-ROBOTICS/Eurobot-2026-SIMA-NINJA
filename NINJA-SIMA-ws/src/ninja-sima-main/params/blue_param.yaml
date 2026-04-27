@@ -1,72 +1,111 @@
+# sima 搬 hazelnut 回家
 ninja_sima_main_node:
   ros__parameters:
-    waypoints: ["p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9"]
+    waypoints: ["p1", "p2", "p3", "p4", "p4_2", "p5", "p6", "p7", "p8", "p9", "p10", "p11", "p12", "p13"]
     
+    # move 2 hazelnut 疼空間
     p1:
-      x: 1.886
-      y: 1.894
-      yaw: 1.579
+      x: 2.0
+      y: 1.865
+      yaw: -0.517
       task_type: "docking"
-      task_num: "13"
+      task_num: "24"
 
     p2:
-      x: 1.886
-      y: 1.894
-      yaw: 1.579
+      x: 1.811
+      y: 1.879
+      yaw: -0.548
       task_type: "docking"
-      task_num: "11"
+      task_num: "21"
     
     p3:
-      x: 1.827
-      y: 1.713
-      yaw: 1.639
+      x: 1.927
+      y: 1.842
+      yaw: -0.548
       task_type: "docking"
-      task_num: "12"
+      task_num: "13"
     
-    # move 3rd nut    
+    # move 1st nut    
     p4:
-      x: 1.789
-      y: 1.860
-      yaw: -0.04
+      x: 1.88
+      y: 1.75
+      yaw: -0.0
       task_type: "docking"
       task_num: "11"
-    
-    p5:
-      x: 1.843
-      y: 1.649
-      yaw: -0.076
-      task_type: "docking"
-      task_num: "12"
-    
-    # move 4th nut
-    p6:
-      x: 1.728
-      y: 1.874
-      yaw: 0.023
-      task_type: "docking"
-      task_num: "11"
-    
-    p7:
-      x: 1.789
-      y: 1.655
-      yaw: -0.092
-      task_type: "docking"
-      task_num: "12"
-    # balck hazelnut
-    p8:
-      x: 1.760
-      y: 1.887
-      yaw: -0.403
+
+    p4_2:
+      x: 1.97
+      y: 1.720
+      yaw: -0.0
       task_type: "goto"
       task_num: "11"
     
-    p9:
-      x: 2.286
-      y: 1.833
-      yaw: -0.493
+    p5:
+      x: 1.97
+      y: 1.72
+      yaw: -0.067
       task_type: "docking"
-      task_num: "29"
+      task_num: "14"
+    
+    p6:
+      x: 2.309
+      y: 1.865
+      yaw: 3.172
+      task_type: "docking"
+      task_num: "12"
+    
+    # move 2nd nut
+    # p7:
+    #   x: 1.781
+    #   y: 1.884
+    #   yaw: -0.0650
+    #   task_type: "docking"
+    #   task_num: "24"
 
+    # p8:
+    #   x: 1.571
+    #   y: 1.874
+    #   yaw: -0.515
+    #   task_type: "docking"
+    #   task_num: "21"
+    # # black nut
+    # p9:
+    #   x: 2.267
+    #   y: 1.824
+    #   yaw: -0.555
+    #   task_type: "docking"
+    #   task_num: "29"
+    
+    # p10:
+    #   x: 2.053
+    #   y: 1.826
+    #   yaw: -0.541
+    #   task_type: "docking"
+    #   task_num: "24"
+    
+    # p11:
+    #   x: 2.164
+    #   y: 1.818
+    #   yaw: -0.600
+    #   task_type: "docking"
+    #   task_num: "21"
+
+    # p12:
+    #   x: 2.266
+    #   y: 1.800
+    #   yaw: -0.457
+    #   task_type: "goto"
+    #   task_num: "29"
+
+    # p13:
+    #   x: 2.260
+    #   y: 1.666
+    #   yaw: -0.5
+    #   task_type: "goto"
+    #   task_num: "29"
+
+
+    
     # p10:
     #   x: 2.157
     #   y: 1.823
