@@ -130,15 +130,15 @@ private:
     rclcpp_lifecycle::LifecyclePublisher<nav_msgs::msg::Path>::SharedPtr teb_path_pub_;
     rclcpp_lifecycle::LifecyclePublisher<nav_msgs::msg::Path>::SharedPtr global_path_pub_;
     // parameters (band)
-    double dt_ref_{0.1};
-    double resample_ds_{0.05};
+    double dt_ref_{0.05};
+    double resample_ds_{0.01};
     int iterations_{2};
 
     // obstacle
     double min_obstacle_dist_{0.25};
-    double w_smooth_{1.0};
+    double w_smooth_{0.0};
     double w_obst_{2.0};
-    double step_size_{0.05};
+    double step_size_{0.01};
     double slowdown_obstacle_dist_{0.3};
     double stop_obstacle_dist_{0.15};
     double obstacle_check_lookahead_{0.5};
@@ -153,6 +153,7 @@ private:
     // goal behavior
     double goal_xy_stop_dist_{0.02};
     double goal_heading_switch_dist_{0.20};
+    double goal_yaw_tolerance_{0.05};
 
     // limits
     double max_v_{1.1};
@@ -170,13 +171,14 @@ private:
     double last_vx_{0.0};
     double last_vy_{0.0};
     double last_w_{0.0};
+    bool goal_heading_aligned_once_{false};
 
     // --- replan trigger params ---
-    double max_cost_threshold_{150.0};     
-    bool treat_no_info_as_obstacle_{false}; 
-    int cost_check_stride_{1};            
+    double max_cost_threshold_{95.0};
+    bool treat_no_info_as_obstacle_{false};
+    int cost_check_stride_{1};
 
-    double stop_v_eps_{0.05};             
+    double stop_v_eps_{0.01};
     double blocked_stop_clearance_{0.5};
     unsigned char maxCostOnBand(const nav2_costmap_2d::Costmap2D & cm) const;
 

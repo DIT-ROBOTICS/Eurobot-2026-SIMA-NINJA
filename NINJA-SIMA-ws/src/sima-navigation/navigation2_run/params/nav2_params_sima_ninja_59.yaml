@@ -143,14 +143,14 @@ controller_server:
       plugin: "teb_controller::TebController"
 
       # === TEB params ===
-      dt_ref: 0.1 # Time resolution, smaller is more precise but computationally heavier
+      dt_ref: 0.05 # Time resolution, smaller is more precise but computationally heavier
       resample_ds: 0.01 # Path point spacing (m)
-      iterations: 2 # Number of optimization iterations, at least 3 recommended for better convergence
+      iterations: 1 # Number of optimization iterations, at least 3 recommended for better convergence
 
       # Obstacle avoidance parameters
       min_obstacle_dist: 0.22 # [Adjusted] Match your robot radius 0.075, leave some margin (original 0.25 was too large)
-      w_smooth: 1.0 # Increase smoothing weight for smoother paths
-      w_obst: 2.0
+      w_smooth: 0.0 # Increase smoothing weight for smoother paths
+      w_obst: 1.0
       step_size: 0.01
 
       # Prediction parameters
@@ -161,34 +161,18 @@ controller_server:
       k_w: 0.2
 
       # Goal behavior
-      goal_xy_stop_dist: 0.01
-      goal_heading_switch_dist: 0.60 # When to start adjusting final heading based on distance to goal
+      goal_xy_stop_dist: 0.02
+      goal_heading_switch_dist: 0.02 # When to start adjusting final heading based on distance to goal
 
       # Velocity limits (match with your velocity_smoother)
       max_v: 0.4 # Slightly reduced for testing, increase to 1.5 once stable
       min_v: -0.2
-      max_w: 2.5
-      max_acc_v: 1.0 # Acceleration limits
-      max_acc_w: 4.0  # Angular acceleration limits
+      # min_v: -0.2
+      max_w: 0.5
+      max_acc_v: 1.5 # Acceleration limits
+      max_acc_w: 0.8  # Angular acceleration limits 
 
-      # Costmap related
-      max_cost_threshold: 100.0 # Try to plan as long as it's below this cost
-      blocked_stop_clearance: 0.3
-      treat_no_info_as_obstacle: false
-      cost_check_stride: 1
-
-      # Stop condition
-      stop_v_eps: 0.01
-
-      # Replanning mechanism
-      replan_min_blocked_time: 1.0
-      replan_cooldown: 1.0
-
-      slowdown_obstacle_dist: 0.05
-      stop_obstacle_dist: 0.15
-      obstacle_check_lookahead: 0.8
-      obstacle_check_time_horizon: 1.2
-      obstacle_cost_threshold: 252.0 
+      stop_v_eps_: 0.01
 
 local_costmap:
   local_costmap:

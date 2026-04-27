@@ -65,6 +65,7 @@ void TebController::configure(
 
     node->declare_parameter(name_ + ".goal_xy_stop_dist", goal_xy_stop_dist_);
     node->declare_parameter(name_ + ".goal_heading_switch_dist", goal_heading_switch_dist_);
+    node->declare_parameter(name_ + ".goal_yaw_tolerance", goal_yaw_tolerance_);
 
     node->declare_parameter(name_ + ".max_v", max_v_);
     node->declare_parameter(name_ + ".min_v", min_v_);
@@ -101,6 +102,7 @@ void TebController::configure(
 
     node->get_parameter(name_ + ".goal_xy_stop_dist", goal_xy_stop_dist_);
     node->get_parameter(name_ + ".goal_heading_switch_dist", goal_heading_switch_dist_);
+    node->get_parameter(name_ + ".goal_yaw_tolerance", goal_yaw_tolerance_);
 
     node->get_parameter(name_ + ".max_v", max_v_);
     node->get_parameter(name_ + ".min_v", min_v_);
@@ -124,6 +126,7 @@ void TebController::configure(
     step_size_ = clamp(step_size_, 0.001, 0.2);
 
     lookahead_dist_ = std::max(0.02, lookahead_dist_);
+    goal_yaw_tolerance_ = clamp(goal_yaw_tolerance_, 0.0, M_PI);
     max_v_ = std::max(0.01, max_v_);
     max_w_ = std::max(0.01, max_w_);
     min_v_ = std::max(0.0, min_v_);
@@ -161,6 +164,7 @@ void TebController::cleanup()
     blocked_since_ = rclcpp::Time(0, 0, clock_ ? clock_->get_clock_type() : RCL_ROS_TIME);
     last_replan_time_ = rclcpp::Time(0, 0, clock_ ? clock_->get_clock_type() : RCL_ROS_TIME);
     last_vx_ = last_vy_ = last_w_ = 0.0;
+    goal_heading_aligned_once_ = false;
 }
 
 void TebController::activate()
@@ -189,6 +193,9 @@ void TebController::setPlan(const nav_msgs::msg::Path & path)
 
     initTimedElasticBand(global_plan_);
     has_plan_ = (teb_band_.size() >= 2);
+    last_vx_ = last_vy_ = last_w_ = 0.0;
+    goal_heading_aligned_once_ = false;
+    last_stamp_ = rclcpp::Time(0, 0, clock_ ? clock_->get_clock_type() : RCL_ROS_TIME);
 }
 
 void TebController::setSpeedLimit(const double & speed_limit, const bool & percentage)
@@ -776,21 +783,32 @@ geometry_msgs::msg::TwistStamped TebController::computeVelocityCommands(
                                                        : costAt(*cm, px, py);
     const bool pose_collision = (pose_cost >= obstacle_cost_threshold_);
 
-    // Near goal: stop translation to avoid overshoot
-    if (goal_dist <= goal_xy_stop_dist_) {
-        vx = 0.0;
-        vy = 0.0;
-    }
+    auto positive_yaw_error = [](double target_yaw, double current_yaw) {
+        double err = target_yaw - current_yaw;
+        while (err < 0.0) err += 2.0 * M_PI;
+        while (err >= 2.0 * M_PI) err -= 2.0 * M_PI;
+        return err;
+    };
 
-    // Heading control:
-    // far: face the motion direction
-    // near: align with final goal yaw
-    double target_yaw = std::atan2(dy_w, dx_w);
-    if (goal_dist <= goal_heading_switch_dist_) {
-        target_yaw = goal_yaw;
+    double w = 0.0;
+    bool allow_w = false;
+    const bool aligning_goal_heading =
+        (goal_dist <= goal_xy_stop_dist_) && !goal_heading_aligned_once_;
+    if (aligning_goal_heading) {
+        const double goal_heading_err = positive_yaw_error(goal_yaw, yaw);
+        const double goal_heading_abs_err =
+            std::min(goal_heading_err, 2.0 * M_PI - goal_heading_err);
+        if (goal_heading_abs_err > goal_yaw_tolerance_) {
+            vx = 0.0;
+            vy = 0.0;
+            w = k_w_ * goal_heading_err;
+            allow_w = true;
+        } else {
+            goal_heading_aligned_once_ = true;
+        }
+    } else {
+        w = 0.0;
     }
-    double heading_err = normAngle(target_yaw - yaw);
-    double w = k_w_ * heading_err;
 
     // limit translational speed magnitude
     double vmag = std::hypot(vx, vy);
@@ -863,6 +881,7 @@ geometry_msgs::msg::TwistStamped TebController::computeVelocityCommands(
         vy = 0.0;
         vmag = 0.0;
         w = 0.0;
+        allow_w = false;
         request_replan = true;
     } else if (std::isfinite(obst_dist) && obst_dist <= slowdown_obstacle_dist_) {
         const double alpha = (obst_dist - stop_obstacle_dist_) /
@@ -885,6 +904,18 @@ geometry_msgs::msg::TwistStamped TebController::computeVelocityCommands(
         w = last_w_ + dw;
         }
     }
+    if (allow_w) {
+        vx = 0.0;
+        vy = 0.0;
+        w = std::max(0.0, w);
+    } else if (aligning_goal_heading && !goal_heading_aligned_once_) {
+        vx = 0.0;
+        vy = 0.0;
+        w = 0.0;
+    } else {
+        w = 0.0;
+    }
+
     last_stamp_ = now;
     last_vx_ = vx;
     last_vy_ = vy;
