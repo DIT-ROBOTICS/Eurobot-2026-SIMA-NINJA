@@ -1,10 +1,12 @@
 <CycloneDDS>
   <Domain Id="any">
     <General>
-      <Interfaces>
-        <NetworkInterface address="127.0.0.1" multicast="true"/>
-      </Interfaces>
-      <DontRoute>true</DontRoute>
+      <NetworkInterfaceAddress>wlan0</NetworkInterfaceAddress>
+      <DontRoute>false</DontRoute>
     </General>
+    <Tracing>
+      <Verbosity>config</Verbosity>
+      <OutputFile>stdout</OutputFile>
+    </Tracing>
   </Domain>
 </CycloneDDS>
