@@ -153,16 +153,17 @@ controller_server:
 
       # Goal behavior
       goal_xy_stop_dist: 0.02
+      goal_yaw_tolerance: 0.05
 
       # Control gains (similar to PID)
       k_xy: 0.25
-      k_w: 0.4
+      k_w: 0.3
 
       # Velocity limits (match with your velocity_smoother)
-      max_v: 0.6 # Slightly reduced for testing, increase to 1.5 once stable
+      max_v: 0.3 # Slightly reduced for testing, increase to 1.5 once stable
       min_v: -0.4
-      max_w: 0.7
-      max_acc_v: 1.0 # Acceleration limits
+      max_w: 0.5
+      max_acc_v: 0.5 # Acceleration limits
       max_acc_w: 1.0  # Angular acceleration limits 
       stop_v_eps_: 0.01
 
