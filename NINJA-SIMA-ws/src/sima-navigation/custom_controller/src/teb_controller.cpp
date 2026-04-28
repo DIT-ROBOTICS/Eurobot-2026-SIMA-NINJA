@@ -783,21 +783,13 @@ geometry_msgs::msg::TwistStamped TebController::computeVelocityCommands(
                                                        : costAt(*cm, px, py);
     const bool pose_collision = (pose_cost >= obstacle_cost_threshold_);
 
-    auto positive_yaw_error = [](double target_yaw, double current_yaw) {
-        double err = target_yaw - current_yaw;
-        while (err < 0.0) err += 2.0 * M_PI;
-        while (err >= 2.0 * M_PI) err -= 2.0 * M_PI;
-        return err;
-    };
-
     double w = 0.0;
     bool allow_w = false;
     const bool aligning_goal_heading =
         (goal_dist <= goal_xy_stop_dist_) && !goal_heading_aligned_once_;
     if (aligning_goal_heading) {
-        const double goal_heading_err = positive_yaw_error(goal_yaw, yaw);
-        const double goal_heading_abs_err =
-            std::min(goal_heading_err, 2.0 * M_PI - goal_heading_err);
+        const double goal_heading_err = normAngle(goal_yaw - yaw);
+        const double goal_heading_abs_err = std::abs(goal_heading_err);
         if (goal_heading_abs_err > goal_yaw_tolerance_) {
             vx = 0.0;
             vy = 0.0;
@@ -904,10 +896,9 @@ geometry_msgs::msg::TwistStamped TebController::computeVelocityCommands(
         w = last_w_ + dw;
         }
     }
-    if (allow_w) {
+    if (allow_w || w != 0.0) {
         vx = 0.0;
         vy = 0.0;
-        w = std::max(0.0, w);
     } else if (aligning_goal_heading && !goal_heading_aligned_once_) {
         vx = 0.0;
         vy = 0.0;
