@@ -102,7 +102,7 @@ controller_server:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
       xy_goal_tolerance: 0.02
-      yaw_goal_tolerance: 0.1
+      yaw_goal_tolerance: 0.004
       xy_debounce_threshold: 1
       yaw_debounce_threshold: 1
 
@@ -153,9 +153,9 @@ controller_server:
 
       # Goal behavior
       goal_xy_stop_dist: 0.02
-      goal_yaw_tolerance: 0.05
+      goal_yaw_tolerance: 0.004
+      goal_heading_switch_dist: 0.1
 
-      # Control gains (similar to PID)
       k_xy: 0.25
       k_w: 0.3
 
