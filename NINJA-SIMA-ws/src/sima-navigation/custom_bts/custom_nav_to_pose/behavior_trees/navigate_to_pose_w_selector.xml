@@ -8,7 +8,7 @@
               <ComputePathToPose goal="{goal}" path="{path}" planner_id="GridBased"/>
             </RateController>
             <Sequence>
-                <ControllerSelector topic_name="/controller_type" default_controller="TEB" selected_controller="{controller}"/>
+                <ControllerSelector topic_name="/controller_type" default_controller="CustomController" selected_controller="{controller}"/>
                 <GoalCheckerSelector topic_name="/goal_checker_type" default_goal_checker="Precise" selected_goal_checker="{goal_checker}"/>
                 <FollowPath path="{path}" controller_id="{controller}" goal_checker_id="{goal_checker}"/>
             </Sequence>
@@ -25,9 +25,9 @@
             <ForceSuccess>
               <Wait wait_duration="0.5"/>
             </ForceSuccess>
-            <ForceSuccess>
+            <!-- <ForceSuccess>
               <Escape run_dist="5" time_allowance="5" is_recovery="1"/>
-            </ForceSuccess>
+            </ForceSuccess> -->
           </RoundRobin>
         </ReactiveFallback>
       </StopController>
