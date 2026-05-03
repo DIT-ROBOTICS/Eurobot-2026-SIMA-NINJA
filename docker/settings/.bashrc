@@ -120,4 +120,4 @@ fi
 # ** No MASTER in ROS2 
 
 source /opt/ros/humble/setup.bash
-source /install/setup.bash
+source install/setup.bash
