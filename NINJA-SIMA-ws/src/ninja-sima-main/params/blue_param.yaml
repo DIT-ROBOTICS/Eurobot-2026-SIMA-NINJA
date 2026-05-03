@@ -1,7 +1,7 @@
 # sima 搬 hazelnut 回家
 ninja_sima_main_node:
   ros__parameters:
-    waypoints: ["p1", "p2", "p3", "p4", "p4_2", "p5", "p6", "p7", "p8", "p9", "p10", "p11", "p12", "p13"]
+    waypoints: ["p1", "p2", "p3", "p4", "p4_2", "p5", "p5_1", "p6", "p7", "p8", "p9", "p10", "p11", "p12", "p13"]
     
     # move 2 hazelnut 疼空間
     p1:
@@ -20,7 +20,7 @@ ninja_sima_main_node:
     
     p3:
       x: 1.927
-      y: 1.842
+      y: 1.879
       yaw: -0.548
       task_type: "docking"
       task_num: "13"
@@ -47,6 +47,13 @@ ninja_sima_main_node:
       task_type: "docking"
       task_num: "14"
     
+    p5_1:
+      x: 1.97
+      y: 1.865
+      yaw: 3.172
+      task_type: "goto"
+      task_num: "14"
+    
     p6:
       x: 2.309
       y: 1.865
@@ -54,27 +61,27 @@ ninja_sima_main_node:
       task_type: "docking"
       task_num: "12"
     
-    # move 2nd nut
-    # p7:
-    #   x: 1.781
-    #   y: 1.884
-    #   yaw: -0.0650
-    #   task_type: "docking"
-    #   task_num: "24"
+    # move black nut
+    p7:
+      x: 2.282
+      y: 1.865
+      yaw: -0.456
+      task_type: "docking"
+      task_num: "22"
 
-    # p8:
-    #   x: 1.571
-    #   y: 1.874
-    #   yaw: -0.515
-    #   task_type: "docking"
-    #   task_num: "21"
-    # # black nut
-    # p9:
-    #   x: 2.267
-    #   y: 1.824
-    #   yaw: -0.555
-    #   task_type: "docking"
-    #   task_num: "29"
+    p8:
+      x: 2.282
+      y: 1.817
+      yaw: -0.456
+      task_type: "goto"
+      task_num: "22"
+
+    p9:
+      x: 2.061
+      y: 1.817
+      yaw: -0.456
+      task_type: "docking"
+      task_num: "21"
     
     # p10:
     #   x: 2.053
