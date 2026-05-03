@@ -455,6 +455,22 @@ geometry_msgs::msg::TwistStamped CustomController::computeVelocityCommands(
 
     //final_goal_angle_ = vector_global_path_[vector_global_path_.size()-1].theta_;
     double global_distance = sqrt(pow(global_plan_.poses.back().pose.position.x - cur_pose_.x_, 2) + pow(global_plan_.poses.back().pose.position.y - cur_pose_.y_, 2));
+    double xy_goal_tolerance = 0.02;
+    double yaw_goal_tolerance = yaw_goal_tolerance_;
+    if (goal_checker != nullptr) {
+        geometry_msgs::msg::Pose pose_tolerance;
+        geometry_msgs::msg::Twist vel_tolerance;
+        if (goal_checker->getTolerances(pose_tolerance, vel_tolerance)) {
+            if (pose_tolerance.position.x > 0.0) {
+                xy_goal_tolerance = std::max(pose_tolerance.position.x, pose_tolerance.position.y);
+            }
+            double goal_yaw_tolerance = std::abs(tf2::getYaw(pose_tolerance.orientation));
+            if (goal_yaw_tolerance > 0.0) {
+                yaw_goal_tolerance = goal_yaw_tolerance;
+            }
+        }
+    }
+    bool reached_position = global_distance <= xy_goal_tolerance;
     local_goal_ = globalTOlocal(cur_pose_, local_goal_);
     double local_angle = atan2(local_goal_.y_, local_goal_.x_);
     // posetoRobotState(rival_pose_.pose, local_rival_pose_);
@@ -489,13 +505,35 @@ geometry_msgs::msg::TwistStamped CustomController::computeVelocityCommands(
         cmd_vel.twist.angular.z = getGoalAngle(cur_pose_.theta_, final_goal_angle_);
     }
 
+    if (reached_position) {
+        double yaw_error = final_goal_angle_ - cur_pose_.theta_;
+        if (yaw_error > M_PI) {
+            yaw_error -= 2.0 * M_PI;
+        } else if (yaw_error < -M_PI) {
+            yaw_error += 2.0 * M_PI;
+        }
+        cmd_vel.twist.linear.x = 0.0;
+        cmd_vel.twist.linear.y = 0.0;
+        if (std::abs(yaw_error) <= yaw_goal_tolerance) {
+            cmd_vel.twist.angular.z = 0.0;
+        } else {
+            cmd_vel.twist.angular.z = getGoalAngle(cur_pose_.theta_, final_goal_angle_);
+        }
+    } else {
+        cmd_vel.twist.angular.z = 0.0;
+    }
+
     double vel_ = sqrt(pow(cmd_vel.twist.linear.x, 2) + pow(cmd_vel.twist.linear.y, 2));
     check_distance_ = std::max(vel_ * 1.0,look_ahead_distance_);
     check_index_ = getIndex(cur_pose_, vector_global_path_, check_distance_);
     current_index_ = getIndex(cur_pose_, vector_global_path_, look_ahead_distance_);
     last_vel_x_ = cmd_vel.twist.linear.x;
     last_vel_y_ = cmd_vel.twist.linear.y;
-    isObstacleExist_ = checkObstacle(current_index_, check_index_);
+    if (reached_position) {
+        isObstacleExist_ = false;
+    } else {
+        isObstacleExist_ = checkObstacle(current_index_, check_index_);
+    }
   
     if(isObstacleExist_){
         cmd_vel.twist.linear.x = last_vel_x_ * speed_decade_;
