@@ -82,27 +82,27 @@ controller_server:
     use_sim_time: False
     holonomic: False
     use_omnidirectional_robot: False
-    controller_frequency: 20.0
-    min_x_velocity_threshold: 0.001
-    min_y_velocity_threshold: 0.001
-    min_theta_velocity_threshold: 0.001
+    controller_frequency: 40.0
+    min_x_velocity_threshold: 0.005
+    min_y_velocity_threshold: 0.005
+    min_theta_velocity_threshold: 0.00001
     failure_tolerance: 0.0
     progress_checker_plugin: "progress_checker"
     goal_checker_plugins: ["Precise", "Unerring", "Loose"]
-    controller_plugins: ["TEB"]
+    controller_plugins: ["TEB", "CustomController"]
 
     # Progress checker parameters
     progress_checker:
       plugin: "nav2_controller::SimpleProgressChecker"
-      required_movement_radius: 0.01
-      movement_time_allowance: 3.0
+      required_movement_radius: 0.0001
+      movement_time_allowance: 5.0
 
     # Goal checker parameters
     Precise:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
       xy_goal_tolerance: 0.02
-      yaw_goal_tolerance: 0.004
+      yaw_goal_tolerance: 0.01
       xy_debounce_threshold: 1
       yaw_debounce_threshold: 1
 
@@ -117,25 +117,24 @@ controller_server:
     Loose:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.02
-      yaw_goal_tolerance: 0.1
-      # yaw_goal_tolerance: 3.14
+      xy_goal_tolerance: 0.01
+      yaw_goal_tolerance: 0.05
       xy_debounce_threshold: 1
       yaw_debounce_threshold: 1
     
 
-    # TEB:
-    #   plugin: "custom_controller::CustomController"
-    #   max_linear_vel: 0.3
-    #   max_angular_vel: 1.5
-    #   linear_kp: 0.5
-    #   angular_kp: 0.8
-    #   transform_tolerance: 0.1
-    #   look_ahead_distance: 0.4
-    #   speed_decade: 0.125
-    #   costmap_tolerance: 95
-    #   keep_planning: false
-    #   spin_delay_threshold: 0.5
+    CustomController:
+      plugin: "custom_controller::CustomController"
+      max_linear_vel: 0.25
+      max_angular_vel: 1.0
+      linear_kp: 0.5
+      angular_kp: 0.55
+      transform_tolerance: 0.1
+      look_ahead_distance: 0.4
+      speed_decade: 200.0
+      costmap_tolerance: 95
+      keep_planning: false
+      spin_delay_threshold: 0.2
 
 
     # Controller parameters
@@ -143,7 +142,7 @@ controller_server:
       plugin: "teb_controller::TebController"
 
       # Obstacle avoidance parameters
-      min_obstacle_dist: 0.22 # [Adjusted] Match your robot radius 0.075, leave some margin (original 0.25 was too large)
+      min_obstacle_dist: 0.02 # [Adjusted] Match your robot radius 0.075, leave some margin (original 0.25 was too large)
       w_smooth: 0.0 # Increase smoothing weight for smoother paths
       w_obst: 1.0
       step_size: 0.01
@@ -153,19 +152,22 @@ controller_server:
 
       # Goal behavior
       goal_xy_stop_dist: 0.02
-      goal_yaw_tolerance: 0.004
-      goal_heading_switch_dist: 0.1
+      goal_yaw_tolerance: 0.002
+      goal_heading_switch_dist: 0.05
 
-      k_xy: 0.25
+      k_xy: 0.45
       k_w: 0.3
 
       # Velocity limits (match with your velocity_smoother)
       max_v: 0.3 # Slightly reduced for testing, increase to 1.5 once stable
       min_v: -0.4
-      max_w: 0.5
+      max_w: 0.8
+      min_w: 0.3
       max_acc_v: 0.5 # Acceleration limits
-      max_acc_w: 1.0  # Angular acceleration limits 
+      max_acc_w: 1.2  # Angular acceleration limits 
       stop_v_eps_: 0.01
+
+
 
       # # Control gains (similar to PID)
       # k_xy: 0.3
@@ -190,7 +192,7 @@ local_costmap:
       width: 3
       height: 2
       resolution: 0.01
-      robot_radius: 0.075
+      robot_radius: 0.03
       # unknown_cost_value: 0
       # plugins: ["static_layer", "sensor_layer", "inflation_layer"]
       # plugins: ["static_layer", "inflation_layer"]
@@ -219,7 +221,7 @@ global_costmap:
       global_frame: map
       robot_base_frame: base_link
       use_sim_time: False
-      robot_radius: 0.075
+      robot_radius: 0.03
       resolution: 0.01
       track_unknown_space: false
       trinary_costmap: false
@@ -228,13 +230,13 @@ global_costmap:
       plugins:
         [
           "static_layer",
-          "obstacle_layer",
-          "inflation_layer",
-          "sensor_layer",
+          # "obstacle_layer",
+          # "inflation_layer",
+          # "sensor_layer",
           # "sima_layer",
-          "rival_layer",
-          "object_layer",
-          "keepout_layer",
+          # "rival_layer",
+          # "object_layer",
+          # "keepout_layer",
         ]
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
@@ -257,7 +259,7 @@ global_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         cost_scaling_factor: 5.0
-        inflation_radius: 0.074
+        inflation_radius: 0.0
       sensor_layer:
         plugin: "Sensor_costmap_plugin::SensorLayer"
         enabled: True
@@ -432,34 +434,34 @@ planner_server:
     use_omnidirectional_robot: true
     planner_plugins: ["GridBased"]
     GridBased:
-      # plugin: "nav2_navfn_planner/NavfnPlanner"
-      # tolerance: 0.02
-      # use_astar: True
-      # allow_unknown: false
-
-      plugin: "nav2_smac_planner/SmacPlanner2D"
+      plugin: "nav2_navfn_planner/NavfnPlanner"
       tolerance: 0.02
-      use_astar: true
+      use_astar: True
       allow_unknown: false
 
-      cost_travel_multiplier: 2.0 # larger values -> more obstacle avoidance
-      downsample_costmap: false # set to true to downsample costmap for planning
-      downsampling_factor: 4 # factor by which to downsample costmap (example 2 -> half size in each dimension)
-      debug_visualizations: false # set to true to enable visualizations in Rviz
-      # to improve performance, set to true to enable smac planner to use
-      smooth_path: true
-      smooth_path_weight: 0.1
-      smooth_path_iterations: 50
-      smooth_path_tolerance: 1e-6
-      smoother_max_iterations: 10
-      smoother_on_update: True
-      smoother_do_refinement: True
-      # model parameters
-      motion_model_for_search: "OMNI" # "DIFF" or "OMNI"
-      cost_penalty: 50.0 # penalty for too close to obstacles
-      # no need to change
-      max_iterations: 20000
-      max_on_approach_iterations: 1000
+      # plugin: "nav2_smac_planner/SmacPlanner2D"
+      # tolerance: 0.02
+      # use_astar: true
+      # allow_unknown: false
+
+      # cost_travel_multiplier: 2.0 # larger values -> more obstacle avoidance
+      # downsample_costmap: false # set to true to downsample costmap for planning
+      # downsampling_factor: 4 # factor by which to downsample costmap (example 2 -> half size in each dimension)
+      # debug_visualizations: false # set to true to enable visualizations in Rviz
+      # # to improve performance, set to true to enable smac planner to use
+      # smooth_path: true
+      # smooth_path_weight: 0.1
+      # smooth_path_iterations: 50
+      # smooth_path_tolerance: 1e-6
+      # smoother_max_iterations: 10
+      # smoother_on_update: True
+      # smoother_do_refinement: True
+      # # model parameters
+      # motion_model_for_search: "OMNI" # "DIFF" or "OMNI"
+      # cost_penalty: 25.0 # penalty for too close to obstacles
+      # # no need to change
+      # max_iterations: 20000
+      # max_on_approach_iterations: 1000
 
 smoother_server:
   ros__parameters:
@@ -537,13 +539,13 @@ docking_server:
     fixed_frame: "map"
     dock_backwards: false
     dock_prestaging_tolerance: 0.01
-    velocity_smoother_wait: 0.12
+    velocity_smoother_wait: 0.2
 
     # Types of docks
     dock_plugins: ["dock"]
     dock:
       plugin: "opennav_docking::SimpleChargingDock"
-      docking_point_x_offset: 0.05
+      docking_point_x_offset: 0.0
       docking_point_y_offset: 0.0
       docking_threshold: 0.005
       use_debounce: true
