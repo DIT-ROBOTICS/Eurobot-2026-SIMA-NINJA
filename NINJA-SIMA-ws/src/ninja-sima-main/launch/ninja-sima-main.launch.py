@@ -1,13 +1,17 @@
-import os
-from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
 def generate_launch_description():
-    pkg_dir = get_package_share_directory('ninja-sima-main')
-    
-    # Parameters file path
-    main_param_path = os.path.join(pkg_dir, 'params', 'main_param.yaml')
+    team = LaunchConfiguration('team')
+
+    declare_team_arg = DeclareLaunchArgument(
+        'team',
+        default_value='blue',
+        choices=['blue', 'yellow'],
+        description='Team side for waypoint parameters'
+    )
 
     ninja_sima_main_node = Node(
         package='ninja-sima-main',
@@ -15,9 +19,10 @@ def generate_launch_description():
         name='ninja_sima_main_node',
         output='screen',
         emulate_tty=True,
-        parameters=[main_param_path]
+        parameters=[{'team': team}]
     )
 
     return LaunchDescription([
+        declare_team_arg,
         ninja_sima_main_node
     ])

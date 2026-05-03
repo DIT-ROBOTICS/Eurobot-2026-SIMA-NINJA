@@ -10,6 +10,7 @@ from launch.substitutions import LaunchConfiguration, PythonExpression  # type: 
 
 def generate_launch_description():
 	mode = LaunchConfiguration('mode')
+	team = LaunchConfiguration('team')
 
 	navigation2_run_dir = get_package_share_directory('navigation2_run')
 	domain_bridge_dir = get_package_share_directory('domain_bridge')
@@ -22,6 +23,13 @@ def generate_launch_description():
 		default_value='real',
 		choices=['real', 'sim'],
 		description='Bringup mode: real or sim'
+	)
+
+	declare_team_arg = DeclareLaunchArgument(
+		'team',
+		default_value='blue',
+		choices=['blue', 'yellow'],
+		description='Team side for waypoint parameters'
 	)
 
 	nav2_launch = IncludeLaunchDescription(
@@ -53,11 +61,13 @@ def generate_launch_description():
 	ninja_sima_main_launch = IncludeLaunchDescription(
 		PythonLaunchDescriptionSource(
 			os.path.join(ninja_sima_main_dir, 'launch', 'ninja-sima-main.launch.py')
-		)
+		),
+		launch_arguments={'team': team}.items()
 	)
 
 	return LaunchDescription([
 		declare_mode_arg,
+		declare_team_arg,
 		nav2_launch,
 		domain_bridge_launch,
 		localization_real_launch,
