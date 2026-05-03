@@ -70,6 +70,7 @@ void TebController::configure(
     node->declare_parameter(name_ + ".max_v", max_v_);
     node->declare_parameter(name_ + ".min_v", min_v_);
     node->declare_parameter(name_ + ".max_w", max_w_);
+    node->declare_parameter(name_ + ".min_w", min_w_);
     node->declare_parameter(name_ + ".max_acc_v", max_acc_v_);
     node->declare_parameter(name_ + ".max_acc_w", max_acc_w_);
 
@@ -107,6 +108,7 @@ void TebController::configure(
     node->get_parameter(name_ + ".max_v", max_v_);
     node->get_parameter(name_ + ".min_v", min_v_);
     node->get_parameter(name_ + ".max_w", max_w_);
+    node->get_parameter(name_ + ".min_w", min_w_);
     node->get_parameter(name_ + ".max_acc_v", max_acc_v_);
     node->get_parameter(name_ + ".max_acc_w", max_acc_w_);
 
@@ -130,6 +132,7 @@ void TebController::configure(
     max_v_ = std::max(0.01, max_v_);
     max_w_ = std::max(0.01, max_w_);
     min_v_ = std::max(0.0, min_v_);
+    min_w_ = clamp(min_w_, 0.0, max_w_);
 
     max_cost_threshold_ = clamp(max_cost_threshold_, 0.0, 255.0);
     cost_check_stride_ = std::max(1, cost_check_stride_);
@@ -361,6 +364,9 @@ double TebController::minObstacleDistance(
             if ((unsigned)iy >= cm.getSizeInCellsY()) continue;
 
             const unsigned char c = cm.getCost(ix, iy);
+            if (!treat_no_info_as_obstacle_ && c == nav2_costmap_2d::NO_INFORMATION) {
+                continue;
+            }
             if (c < obstacle_cost_threshold_) continue;
 
             double wx, wy;
@@ -403,6 +409,9 @@ double TebController::minObstacleDistanceGlobal(double x, double y, double searc
                                                : nav2_costmap_2d::NO_INFORMATION;
             } else {
                 c = static_cast<unsigned char>(raw);
+            }
+            if (!treat_no_info_as_obstacle_ && c == nav2_costmap_2d::NO_INFORMATION) {
+                continue;
             }
             if (c < obstacle_cost_threshold_) continue;
 
@@ -781,7 +790,10 @@ geometry_msgs::msg::TwistStamped TebController::computeVelocityCommands(
 
     const unsigned char pose_cost = use_global_costmap ? costAtGlobal(px, py)
                                                        : costAt(*cm, px, py);
-    const bool pose_collision = (pose_cost >= obstacle_cost_threshold_);
+    bool pose_collision = (pose_cost >= obstacle_cost_threshold_);
+    if (!treat_no_info_as_obstacle_ && pose_cost == nav2_costmap_2d::NO_INFORMATION) {
+        pose_collision = false;
+    }
 
     double w = 0.0;
     bool allow_w = false;
@@ -819,6 +831,9 @@ geometry_msgs::msg::TwistStamped TebController::computeVelocityCommands(
     }
 
     w = clamp(w, -max_w_, max_w_);
+    if (std::abs(w) > 1e-9 && std::abs(w) < min_w_) {
+        w = std::copysign(min_w_, w);
+    }
 
     // Apply Nav2 speed limit interface (only scale translation)
     if (speed_limit_ > 0.0) {
@@ -847,6 +862,9 @@ geometry_msgs::msg::TwistStamped TebController::computeVelocityCommands(
         const auto & st = teb_band_[i];
         const unsigned char c = use_global_costmap ? costAtGlobal(st.x, st.y)
                                                    : costAt(*cm, st.x, st.y);
+        if (!treat_no_info_as_obstacle_ && c == nav2_costmap_2d::NO_INFORMATION) {
+            continue;
+        }
         if (c >= obstacle_cost_threshold_) {
             path_blocked = true;
             break;

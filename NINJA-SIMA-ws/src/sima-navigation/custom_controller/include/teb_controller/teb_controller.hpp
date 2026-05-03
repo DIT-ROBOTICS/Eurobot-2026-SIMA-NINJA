@@ -143,7 +143,7 @@ private:
     double stop_obstacle_dist_{0.15};
     double obstacle_check_lookahead_{0.5};
     double obstacle_check_time_horizon_{1.0};
-    double obstacle_cost_threshold_{nav2_costmap_2d::INSCRIBED_INFLATED_OBSTACLE};
+    double obstacle_cost_threshold_{150};
 
     // tracking (holonomic)
     double lookahead_dist_{0.25};
@@ -159,6 +159,7 @@ private:
     double max_v_{1.1};
     double min_v_{0.0};
     double max_w_{12.0};
+    double min_w_{0.0};
     double max_acc_v_{3.3};
     double max_acc_w_{120.0};
 
