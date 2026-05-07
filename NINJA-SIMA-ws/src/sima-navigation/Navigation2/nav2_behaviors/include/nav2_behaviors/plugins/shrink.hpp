@@ -35,6 +35,9 @@ namespace nav2_behaviors
         int times;
         int unused_shrink;
         bool shrinkBack;
+        bool has_inflation_layer_param;
+        bool has_costmap;
+        bool has_goal_pose;
         double costmap_tolerance;
         double original_inflation_radius;
         double original_rival_halted_radius;
