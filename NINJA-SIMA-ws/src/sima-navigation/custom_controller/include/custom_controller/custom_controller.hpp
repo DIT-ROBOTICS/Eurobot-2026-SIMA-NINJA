@@ -136,6 +136,9 @@ class CustomController : public nav2_core::Controller{
         rclcpp::Subscription<std_msgs::msg::String>::SharedPtr controller_function_sub_;
         std::string controller_function_;
         double spin_delay_threshold_;
+
+        enum class GoalPhase { Translate, Rotate };
+        GoalPhase goal_phase_{GoalPhase::Translate};
 };
 
 }  // namespace custom_controller

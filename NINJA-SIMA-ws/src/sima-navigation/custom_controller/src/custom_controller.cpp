@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cmath>
 #include <string>
 #include <memory>
 
@@ -49,6 +50,7 @@ void CustomController::configure(
     clock_ = node->get_clock();
     update_plan_ = true;
     isObstacleExist_ = false;
+    goal_phase_ = GoalPhase::Translate;
     costmap_subscription_ = node->create_subscription<nav_msgs::msg::OccupancyGrid>(
         "/global_costmap/costmap",  // Replace with your actual costmap topic
         rclcpp::QoS(10),
@@ -180,6 +182,7 @@ void CustomController::setPlan(const nav_msgs::msg::Path & path)
     final_goal_angle_ = tf2::getYaw(global_plan_.poses.back().pose.orientation);
 
     update_plan_ = keep_planning_;
+    goal_phase_ = GoalPhase::Translate;
     // update_plan_ = true;
     isObstacleExist_ = false;
     //print the distance between the points
@@ -315,7 +318,14 @@ double CustomController::getGoalAngle(double cur_angle, double goal_angle) {
         ang_diff_ += 2.0 * M_PI;
     }
 
-    double angle_vel_ = std::clamp(ang_diff_ * angular_kp_, -max_angular_vel_, max_angular_vel_);
+    const double max_angular_vel = std::max(0.0, max_angular_vel_);
+    const double min_angular_vel = std::clamp(min_angular_vel_, 0.0, max_angular_vel);
+    double angle_vel_ = std::clamp(ang_diff_ * angular_kp_, -max_angular_vel, max_angular_vel);
+    if (min_angular_vel > 0.0 && std::abs(angle_vel_) > 1e-9 &&
+        std::abs(angle_vel_) < min_angular_vel)
+    {
+        angle_vel_ = std::copysign(min_angular_vel, angle_vel_);
+    }
     return angle_vel_;
 }
 
@@ -470,7 +480,13 @@ geometry_msgs::msg::TwistStamped CustomController::computeVelocityCommands(
             }
         }
     }
-    bool reached_position = global_distance <= xy_goal_tolerance;
+    double xy_enter_tolerance = xy_goal_tolerance;
+    double xy_exit_tolerance = xy_goal_tolerance * 1.5;
+    if (goal_phase_ == GoalPhase::Translate && global_distance <= xy_enter_tolerance) {
+        goal_phase_ = GoalPhase::Rotate;
+    } else if (goal_phase_ == GoalPhase::Rotate && global_distance > xy_exit_tolerance) {
+        goal_phase_ = GoalPhase::Translate;
+    }
     local_goal_ = globalTOlocal(cur_pose_, local_goal_);
     double local_angle = atan2(local_goal_.y_, local_goal_.x_);
     // posetoRobotState(rival_pose_.pose, local_rival_pose_);
@@ -491,21 +507,24 @@ geometry_msgs::msg::TwistStamped CustomController::computeVelocityCommands(
 
     double local_distance = sqrt(pow(local_goal_.x_ - cur_pose_.x_, 2) + pow(local_goal_.y_ - cur_pose_.y_, 2));
     
-    if(controller_function_ == "Didilong") {
-        cmd_vel.twist.linear.x = std::min(global_distance * 10.0, max_linear_vel_) * cos(local_angle);
-        cmd_vel.twist.linear.y = std::min(global_distance * 10.0, max_linear_vel_) * sin(local_angle);
+    if (goal_phase_ == GoalPhase::Translate) {
+        const double max_linear_vel = std::max(0.0, max_linear_vel_);
+        const double min_linear_vel = std::clamp(min_linear_vel_, 0.0, max_linear_vel);
+        double target_linear_vel = 0.0;
+        if(controller_function_ == "Didilong") {
+            target_linear_vel = std::min(global_distance * 10.0, max_linear_vel);
+        } else if(controller_function_ == "NonStop") {
+            target_linear_vel = std::max(non_stop_min_vel_, std::min(global_distance * linear_kp_, max_linear_vel));
+        } else {
+            target_linear_vel = std::min(global_distance * linear_kp_, max_linear_vel);
+        }
+        if (target_linear_vel > 1e-9 && target_linear_vel < min_linear_vel) {
+            target_linear_vel = min_linear_vel;
+        }
+        cmd_vel.twist.linear.x = target_linear_vel * cos(local_angle);
+        cmd_vel.twist.linear.y = target_linear_vel * sin(local_angle);
         cmd_vel.twist.angular.z = 0.0;
-    } else if(controller_function_ == "NonStop") {
-        cmd_vel.twist.linear.x = std::max(non_stop_min_vel_, std::min(global_distance * linear_kp_, max_linear_vel_)) * cos(local_angle);
-        cmd_vel.twist.linear.y = std::max(non_stop_min_vel_, std::min(global_distance * linear_kp_, max_linear_vel_)) * sin(local_angle);
-        cmd_vel.twist.angular.z = getGoalAngle(cur_pose_.theta_, final_goal_angle_);
     } else {
-        cmd_vel.twist.linear.x = std::min(global_distance * linear_kp_, max_linear_vel_) * cos(local_angle);
-        cmd_vel.twist.linear.y = std::min(global_distance * linear_kp_, max_linear_vel_) * sin(local_angle);
-        cmd_vel.twist.angular.z = getGoalAngle(cur_pose_.theta_, final_goal_angle_);
-    }
-
-    if (reached_position) {
         double yaw_error = final_goal_angle_ - cur_pose_.theta_;
         if (yaw_error > M_PI) {
             yaw_error -= 2.0 * M_PI;
@@ -519,8 +538,6 @@ geometry_msgs::msg::TwistStamped CustomController::computeVelocityCommands(
         } else {
             cmd_vel.twist.angular.z = getGoalAngle(cur_pose_.theta_, final_goal_angle_);
         }
-    } else {
-        cmd_vel.twist.angular.z = 0.0;
     }
 
     double vel_ = sqrt(pow(cmd_vel.twist.linear.x, 2) + pow(cmd_vel.twist.linear.y, 2));
@@ -529,7 +546,7 @@ geometry_msgs::msg::TwistStamped CustomController::computeVelocityCommands(
     current_index_ = getIndex(cur_pose_, vector_global_path_, look_ahead_distance_);
     last_vel_x_ = cmd_vel.twist.linear.x;
     last_vel_y_ = cmd_vel.twist.linear.y;
-    if (reached_position) {
+    if (goal_phase_ == GoalPhase::Rotate) {
         isObstacleExist_ = false;
     } else {
         isObstacleExist_ = checkObstacle(current_index_, check_index_);
