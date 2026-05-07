@@ -77,6 +77,7 @@ private:
     int32_t prev_task_;
     int32_t mission_type_now_;
     int32_t mission_status_;
+    int32_t last_mission_status_raw_;
 
     std::vector<Pose2D> test_waypoints_;
     size_t current_waypoint_index_;

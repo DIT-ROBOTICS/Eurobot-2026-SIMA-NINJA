@@ -1,10 +1,15 @@
 #include "ninja-sima-main/ninja-sima-main_docking.hpp"
 
+#include <sstream>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 NinjaSimaMainDocking::NinjaSimaMainDocking(rclcpp::Node* node)
-	: node_(node), is_docking_(false) {
+	: node_(node),
+	  is_docking_(false),
+	  feedback_count_(0),
+	  last_feedback_state_(0),
+	  last_feedback_retries_(0) {
 	dock_robot_client_ = rclcpp_action::create_client<opennav_docking_msgs::action::DockRobot>(
 		node_,
 		"/dock_robot");
@@ -15,8 +20,16 @@ void NinjaSimaMainDocking::set_result_callback(std::function<void(bool)> callbac
 }
 
 void NinjaSimaMainDocking::start_docking(const std::string& task_name, double x, double y, double yaw) {
+	active_docking_name_ = task_name;
+	feedback_count_ = 0;
+	last_feedback_state_ = 0;
+	last_feedback_retries_ = 0;
+	docking_start_time_ = node_->now();
+	last_feedback_time_ = rclcpp::Time(0, 0, node_->get_clock()->get_clock_type());
+	RCLCPP_INFO(node_->get_logger(), "DockRobot preparing goal %s", active_docking_name_.c_str());
+
 	if (!dock_robot_client_->action_server_is_ready()) {
-		RCLCPP_ERROR(node_->get_logger(), "DockRobot action server '/dock_robot' is not ready.");
+		RCLCPP_ERROR(node_->get_logger(), "DockRobot action server '/dock_robot' is not ready for goal %s.", active_docking_name_.c_str());
 		is_docking_ = false;
 		if (result_callback_) {
 			result_callback_(false);
@@ -54,31 +67,37 @@ void NinjaSimaMainDocking::start_docking(const std::string& task_name, double x,
 	is_docking_ = true;
 
 	RCLCPP_INFO(node_->get_logger(), "Sending docking goal %s: x=%.2f, y=%.2f, theta=%.2f",
-				task_name.c_str(), x, y, yaw);
+				active_docking_name_.c_str(), x, y, yaw);
 	RCLCPP_INFO(node_->get_logger(), "DockRobot goal sent: type=%s, use_dock_id=%s, navigate_to_staging_pose=%s",
 				goal_msg.dock_type.c_str(),
 				goal_msg.use_dock_id ? "true" : "false",
 				goal_msg.navigate_to_staging_pose ? "true" : "false");
+	RCLCPP_INFO(node_->get_logger(), "DockRobot goal %s dispatched; is_docking=true", active_docking_name_.c_str());
 }
 
 void NinjaSimaMainDocking::dock_goal_response_callback(
 	const rclcpp_action::ClientGoalHandle<opennav_docking_msgs::action::DockRobot>::SharedPtr & goal_handle) {
 	if (!goal_handle) {
-		RCLCPP_ERROR(node_->get_logger(), "DockRobot goal was rejected by server.");
+		RCLCPP_ERROR(node_->get_logger(), "DockRobot goal %s was rejected by server.", active_docking_name_.c_str());
 		is_docking_ = false;
 		if (result_callback_) {
 			result_callback_(false);
 		}
 	} else {
-		RCLCPP_INFO(node_->get_logger(), "DockRobot goal accepted by server.");
+		RCLCPP_INFO(node_->get_logger(), "DockRobot goal %s accepted by server.", active_docking_name_.c_str());
 	}
 }
 
 void NinjaSimaMainDocking::dock_feedback_callback(
 	rclcpp_action::ClientGoalHandle<opennav_docking_msgs::action::DockRobot>::SharedPtr,
 	const std::shared_ptr<const opennav_docking_msgs::action::DockRobot::Feedback> feedback) {
-	// RCLCPP_INFO(node_->get_logger(), "Docking feedback: state=%u, retries=%u",
-	// 			feedback->state, feedback->num_retries);
+	feedback_count_++;
+	last_feedback_time_ = node_->now();
+	last_feedback_state_ = feedback->state;
+	last_feedback_retries_ = feedback->num_retries;
+	RCLCPP_INFO_THROTTLE(node_->get_logger(), *node_->get_clock(), 1000,
+		"DockRobot feedback %s: state=%u, retries=%u",
+		active_docking_name_.c_str(), feedback->state, feedback->num_retries);
 }
 
 void NinjaSimaMainDocking::dock_result_callback(
@@ -90,13 +109,34 @@ void NinjaSimaMainDocking::dock_result_callback(
 
 	if (!success) {
 		const uint16_t error_code = result.result ? result.result->error_code : 999;
-		RCLCPP_ERROR(node_->get_logger(), "DockRobot failed. result_code=%d, error_code=%u",
-					 static_cast<int>(result.code), error_code);
+		RCLCPP_ERROR(node_->get_logger(), "DockRobot goal %s failed. result_code=%d, error_code=%u",
+					 active_docking_name_.c_str(), static_cast<int>(result.code), error_code);
 	} else {
-		RCLCPP_INFO(node_->get_logger(), "DockRobot succeeded.");
+		RCLCPP_INFO(node_->get_logger(), "DockRobot goal %s succeeded.", active_docking_name_.c_str());
 	}
+	RCLCPP_INFO(node_->get_logger(), "DockRobot result callback %s: success=%s, is_docking=false",
+		active_docking_name_.c_str(), success ? "true" : "false");
 
 	if (result_callback_) {
 		result_callback_(success);
 	}
+}
+
+std::string NinjaSimaMainDocking::debug_status() const {
+	std::ostringstream stream;
+	const double elapsed = is_docking_ ? (node_->now() - docking_start_time_).seconds() : 0.0;
+	stream << "active=" << active_docking_name_
+		   << ", elapsed=" << elapsed << "s"
+		   << ", feedback_count=" << feedback_count_;
+
+	if (feedback_count_ > 0) {
+		const double feedback_age = (node_->now() - last_feedback_time_).seconds();
+		stream << ", last_feedback_age=" << feedback_age << "s"
+			   << ", state=" << last_feedback_state_
+			   << ", retries=" << last_feedback_retries_;
+	} else {
+		stream << ", no_feedback_yet";
+	}
+
+	return stream.str();
 }

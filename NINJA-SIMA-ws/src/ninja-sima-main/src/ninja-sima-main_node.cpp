@@ -6,7 +6,13 @@
 
 using namespace std::chrono_literals;
 
-NinjaSimaMain::NinjaSimaMain() : Node("ninja_sima_main_node"), is_task_running_(false), current_running_task_num_(-1){
+NinjaSimaMain::NinjaSimaMain()
+    : Node("ninja_sima_main_node"),
+      is_task_running_(false),
+      current_running_task_num_(-1),
+      mission_type_now_(-1),
+      mission_status_(-1),
+      last_mission_status_raw_(-1) {
     state_ = NinjaSimaMainState::INIT;
     current_waypoint_index_ = 0;
 
@@ -150,17 +156,36 @@ void NinjaSimaMain::ninja_START() {
     if (!nav_to_pose_->is_navigating() && !is_task_running_ && !docking_->is_docking()) {
         if (!task_queue_.empty()) {
             WaypointTask wp = task_queue_.front();
+            RCLCPP_INFO(this->get_logger(),
+                "Main loop dispatching task: name=%s, type=%s, task_num=%d, queue_size=%zu",
+                wp.name.c_str(), wp.task_type.c_str(), wp.task_num, task_queue_.size());
 
             if (wp.task_type == "docking") {
                 docking_->start_docking(wp.name, wp.x, wp.y, wp.yaw);
             } else {
                 RCLCPP_INFO(this->get_logger(), "Sending waypoint %s: x=%.2f, y=%.2f, theta=%.2f",
                             wp.name.c_str(), wp.x, wp.y, wp.yaw);
-                nav_to_pose_->move_to_pose(wp.x, wp.y, wp.yaw);
+                nav_to_pose_->move_to_pose(wp.name, wp.x, wp.y, wp.yaw);
             }
         } else {
             RCLCPP_INFO_ONCE(this->get_logger(), "All tasks have been completed.");
         }
+    } else if (!task_queue_.empty()) {
+        const WaypointTask& wp = task_queue_.front();
+        const std::string docking_status = docking_->debug_status();
+        RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 2000,
+            "Main loop waiting: front=%s/%s task_num=%d, nav=%s, task_running=%s current_task=%d, docking=%s, mission_status_raw=%d/%d, queue_size=%zu, dock_status={%s}",
+            wp.name.c_str(),
+            wp.task_type.c_str(),
+            wp.task_num,
+            nav_to_pose_->is_navigating() ? "true" : "false",
+            is_task_running_ ? "true" : "false",
+            current_running_task_num_,
+            docking_->is_docking() ? "true" : "false",
+            mission_type_now_,
+            mission_status_,
+            task_queue_.size(),
+            docking_status.c_str());
     }
 }
 
@@ -188,6 +213,7 @@ void NinjaSimaMain::ReadyCheckSub_callback(const std_msgs::msg::Bool::SharedPtr 
 }
 
 void NinjaSimaMain::StartSub_callback(const std_msgs::msg::Int16::SharedPtr msg) {
+    RCLCPP_INFO(this->get_logger(), "Start signal received: %d", msg->data);
     if (msg->data) {
         state_ = NinjaSimaMainState::START;
     } else {
@@ -202,8 +228,27 @@ void NinjaSimaMain::StopSub_callback(const std_msgs::msg::Bool::SharedPtr msg) {
 }
 
 void NinjaSimaMain::MissionStatus_callback(const std_msgs::msg::Int32::SharedPtr msg){
+    const bool status_changed = msg->data != last_mission_status_raw_;
     mission_type_now_ = int32_t(msg->data/10);
     mission_status_ = msg->data%10;
+
+    if (status_changed) {
+        last_mission_status_raw_ = msg->data;
+        RCLCPP_INFO(this->get_logger(),
+            "Mission status changed: raw=%d, mission_type=%d, status=%d, is_task_running=%s, current_task=%d",
+            msg->data,
+            mission_type_now_,
+            mission_status_,
+            is_task_running_ ? "true" : "false",
+            current_running_task_num_);
+    } else if (is_task_running_) {
+        RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000,
+            "Mission status waiting: raw=%d, mission_type=%d, status=%d, current_task=%d",
+            msg->data,
+            mission_type_now_,
+            mission_status_,
+            current_running_task_num_);
+    }
 
     if (is_task_running_ && mission_type_now_ == current_running_task_num_) {
         // Status 1 means completed
@@ -221,12 +266,15 @@ void NinjaSimaMain::on_goal_reached(bool success) {
         task_queue_.pop();
 
         if (completed_task.task_type == "goto") {
-            RCLCPP_INFO(this->get_logger(), "Goal reached. Task type is 'goto'. Moving to next task.");
+            RCLCPP_INFO(this->get_logger(),
+                "Goal reached for %s. Task type is 'goto'. Moving to next task. queue_size=%zu",
+                completed_task.name.c_str(), task_queue_.size());
         } else {
             RCLCPP_WARN(this->get_logger(), "Navigation callback reached for non-goto task type '%s'.", completed_task.task_type.c_str());
         }
     } else if (!success) {
-        RCLCPP_WARN(this->get_logger(), "Navigation Failed! Handling error needed.");
+        RCLCPP_WARN(this->get_logger(), "Navigation failed callback received. queue_empty=%s",
+            task_queue_.empty() ? "true" : "false");
     }
 }
 
@@ -248,7 +296,9 @@ void NinjaSimaMain::on_docking_completed(bool success) {
     }
 
     task_queue_.pop();
-    RCLCPP_INFO(this->get_logger(), "DockRobot succeeded. Executing mission task %d.", completed_task.task_num);
+    RCLCPP_INFO(this->get_logger(),
+        "DockRobot succeeded for %s. Executing mission task %d. queue_size=%zu",
+        completed_task.name.c_str(), completed_task.task_num, task_queue_.size());
     execute_task(completed_task.task_num);
 }
 

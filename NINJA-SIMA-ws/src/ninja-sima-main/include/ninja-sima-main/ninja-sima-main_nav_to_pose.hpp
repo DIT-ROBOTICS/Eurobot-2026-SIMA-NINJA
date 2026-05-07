@@ -6,13 +6,14 @@
 #include "nav2_msgs/action/navigate_to_pose.hpp"
 #include <functional>
 #include <memory>
+#include <string>
 
 class NinjaSimaMainNavToPose {
 public:
     NinjaSimaMainNavToPose(rclcpp::Node* node);
     ~NinjaSimaMainNavToPose() = default;
 
-    void move_to_pose(double x, double y, double theta);
+    void move_to_pose(const std::string& task_name, double x, double y, double theta);
     bool is_navigating() const { return is_navigating_; }
 
     void set_goal_reached_callback(std::function<void(bool)> callback);
@@ -21,6 +22,7 @@ private:
     rclcpp::Node* node_;
     rclcpp_action::Client<nav2_msgs::action::NavigateToPose>::SharedPtr nav_to_pose_client_;
     bool is_navigating_;
+    std::string active_goal_name_;
     std::function<void(bool)> goal_reached_callback_;
 
     void goal_response_callback(const rclcpp_action::ClientGoalHandle<nav2_msgs::action::NavigateToPose>::SharedPtr & goal_handle);

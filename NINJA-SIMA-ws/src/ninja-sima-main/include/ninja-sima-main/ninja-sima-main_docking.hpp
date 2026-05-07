@@ -15,6 +15,7 @@ public:
 
     void start_docking(const std::string& task_name, double x, double y, double yaw);
     bool is_docking() const { return is_docking_; }
+    std::string debug_status() const;
 
     void set_result_callback(std::function<void(bool)> callback);
 
@@ -30,6 +31,12 @@ private:
     rclcpp::Node* node_;
     rclcpp_action::Client<opennav_docking_msgs::action::DockRobot>::SharedPtr dock_robot_client_;
     bool is_docking_;
+    std::string active_docking_name_;
+    rclcpp::Time docking_start_time_;
+    rclcpp::Time last_feedback_time_;
+    size_t feedback_count_;
+    uint16_t last_feedback_state_;
+    uint16_t last_feedback_retries_;
     std::function<void(bool)> result_callback_;
 };
 
