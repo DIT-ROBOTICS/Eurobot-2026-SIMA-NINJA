@@ -281,6 +281,13 @@ void NinjaSimaMain::on_goal_reached(bool success) {
 void NinjaSimaMain::on_docking_completed(bool success) {
     if (!success) {
         RCLCPP_ERROR(this->get_logger(), "Docking failed.");
+        if (!task_queue_.empty() && task_queue_.front().task_type == "docking") {
+            WaypointTask failed_task = task_queue_.front();
+            task_queue_.pop();
+            RCLCPP_WARN(this->get_logger(),
+                "Skipping failed docking task %s so the mission can continue. queue_size=%zu",
+                failed_task.name.c_str(), task_queue_.size());
+        }
         return;
     }
 

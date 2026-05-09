@@ -1,135 +1,219 @@
-# sima 搬 hazelnut 回家
 ninja_sima_main_node:
   ros__parameters:
-    waypoints: ["p1", "p2", "p3", "p4", "p4_2", "p5", "p5_1", "p6", "p7", "p8", "p9", "p10", "p11", "p12", "p13"]
+    waypoints: [
+                "M2N1", "M2N2", "M2N3", 
+                "T1N1", "T1N2", "T1N3", "T1N4", 
+                # "T2N1", "T2N2", "T2N3", "T2N4", "T2N5", "T2N6", 
+                # "MBN1", "MBN2", "MBN3", 
+                "HRBN1", "HRBN2", 
+                "MFFN1", "MFFN1_2", "MFFN2", "MFFN3", "MFFN4", "MFFN5", "MFFN6", 
+                "MBNGP1", "MBNGP2", "MBNGP3", "MBNGP4", "MBNGP5"
+                ]
     
-    # move 2 hazelnut 疼空間
-    p1:
-      x: 2.0
-      y: 1.865
-      yaw: -0.517
+    # move 2 nut 疼空間 (M2N) ["M2N1", "M2N2", "M2N3", ]
+    M2N1:
+      x: 2.050
+      y: 1.870
+      yaw: -0.445
       task_type: "docking"
       task_num: "24"
 
-    p2:
-      x: 1.811
-      y: 1.879
-      yaw: -0.548
+    M2N2:
+      x: 1.825
+      y: 1.870
+      yaw: -0.445
       task_type: "docking"
       task_num: "21"
     
-    p3:
-      x: 1.927
-      y: 1.879
-      yaw: -0.548
-      task_type: "docking"
+    M2N3:
+      x: 1.885
+      y: 1.878
+      yaw: -0.022
+      task_type: "goto"
       task_num: "13"
     
-    # move 1st nut    
-    p4:
-      x: 1.88
-      y: 1.75
-      yaw: -0.0
+    # take 1st nut (T1N) ["T1N1", "T1N2", "T1N3", "T1N4", ]
+    T1N1:
+      x: 1.860
+      y: 1.740
+      yaw: -0.022
       task_type: "docking"
       task_num: "11"
 
-    p4_2:
-      x: 1.97
-      y: 1.720
-      yaw: -0.0
-      task_type: "goto"
-      task_num: "11"
-    
-    p5:
-      x: 1.97
-      y: 1.72
-      yaw: -0.067
+    T1N2:
+      x: 1.900
+      y: 1.725
+      yaw: -0.022
       task_type: "docking"
       task_num: "14"
     
-    p5_1:
-      x: 1.97
-      y: 1.865
-      yaw: 3.172
+    T1N3:
+      x: 1.950
+      y: 1.880
+      yaw: 3.142
       task_type: "goto"
       task_num: "14"
     
-    p6:
-      x: 2.309
-      y: 1.865
-      yaw: 3.172
+    T1N4:
+      x: 2.320
+      y: 1.880
+      yaw: 3.142
       task_type: "docking"
       task_num: "12"
     
-    # move black nut
-    p7:
-      x: 2.282
-      y: 1.865
-      yaw: -0.456
+    # # move black nut (MBN) ["MBN1", "MBN2", "MBN3", ]
+    # MBN1:
+    #   x: 2.310
+    #   y: 1.880
+    #   yaw: -2.671
+    #   task_type: "docking"
+    #   task_num: "22"
+
+    # MBN2:
+    #   x: 2.310
+    #   y: 1.811
+    #   yaw: -2.671
+    #   task_type: "goto"
+    #   task_num: "22"
+
+    # MBN3:
+    #   x: 2.070
+    #   y: 1.811
+    #   yaw: -2.686
+    #   task_type: "docking"
+    #   task_num: "24"
+
+    # home run black nut ["HRBN1", "HRBN2", ]
+    HRBN1:
+      x: 2.310
+      y: 1.880
+      yaw: -0.471
       task_type: "docking"
       task_num: "22"
+    HRBN2:
+      x: 2.310
+      y: 1.835
+      yaw: -0.471
+      task_type: "docking"
+      task_num: "29"
 
-    p8:
-      x: 2.282
-      y: 1.817
+    # # move four full nut (MFFN) ["MFFN1", "MFFN1_2", "MFFN2", "MFFN3", "MFFN4", "MFFN5", "MFFN6", ]
+    
+    MFFN1:
+      x: 1.980
+      y: 1.811
       yaw: -0.456
-      task_type: "goto"
-      task_num: "22"
-
-    p9:
-      x: 2.061
-      y: 1.817
+      task_type: "docking"
+      task_num: "24"
+    
+    MFFN1_2:
+      x: 2.170
+      y: 1.811
       yaw: -0.456
       task_type: "docking"
       task_num: "21"
+
+    MFFN2:
+      x: 2.200
+      y: 1.811
+      yaw: -0.456
+      task_type: "goto" # docking original
+      task_num: "11"
+
+    MFFN3:
+      x: 2.200
+      y: 1.640
+      yaw: -0.456
+      task_type: "goto" # docking original
+      task_num: "12"
+
+    MFFN4:
+      x: 2.170
+      y: 1.825
+      yaw: -0.456
+      task_type: "goto"
+      task_num: "12"
+
+    MFFN5:
+      x: 2.309
+      y: 1.820
+      yaw: -0.456
+      task_type: "goto"
+      task_num: "12"
+
+    MFFN6:
+      x: 2.309
+      y: 1.640
+      yaw: -0.456
+      task_type: "goto"
+      task_num: "12"
     
-    # p10:
-    #   x: 2.053
-    #   y: 1.826
-    #   yaw: -0.541
-    #   task_type: "docking"
-    #   task_num: "24"
-    
-    # p11:
-    #   x: 2.164
-    #   y: 1.818
-    #   yaw: -0.600
-    #   task_type: "docking"
-    #   task_num: "21"
+    # take 2nd nut (T2N) ["T2N1", "T2N2", "T2N3", "T2N4", "T2N5", "T2N6", ]
+    T2N1:
+      x: 2.285
+      y: 1.860
+      yaw: -0.003
+      task_type: "goto"
+      task_num: "12"
+    T2N2:
+      x: 1.835
+      y: 1.860
+      yaw: -0.003
+      task_type: "docking"
+      task_num: "13"
+    T2N3:
+      x: 1.835
+      y: 1.715
+      yaw: -0.003
+      task_type: "docking"
+      task_num: "11"
+    T2N4:
+      x: 1.835
+      y: 1.860
+      yaw: -0.003
+      task_type: "docking"
+      task_num: "14"
+    T2N5:
+      x: 1.835
+      y: 1.860
+      yaw: 3.142
+      task_type: "goto"
+      task_num: "11"
+    T2N6:
+      x: 2.325
+      y: 1.880
+      yaw: 3.142
+      task_type: "docking"
+      task_num: "12"
 
-    # p12:
-    #   x: 2.266
-    #   y: 1.800
-    #   yaw: -0.457
-    #   task_type: "goto"
-    #   task_num: "29"
-
-    # p13:
-    #   x: 2.260
-    #   y: 1.666
-    #   yaw: -0.5
-    #   task_type: "goto"
-    #   task_num: "29"
-
-
-    
-    # p10:
-    #   x: 2.157
-    #   y: 1.823
-    #   yaw: -0.489
-    #   task_type: "docking"
-    #   task_num: "12"
-
-    # p11:
-    #   x: 2.132
-    #   y: 1.866
-    #   yaw: -0.520
-    #   task_type: "docking"
-    #   task_num: "12"
-
-    # p12:
-    #   x: 2.256
-    #   y: 1.758
-    #   yaw: 3.674
-    #   task_type: "docking"
-    #   task_num: "12"
+    # move black nut and go to pentry (MBNGP) ["MBNGP1", "MBNGP2", "MBNGP3", "MBNGP4", "MBNGP5", ]
+    MBNGP1:
+      x: 2.004
+      y: 1.645
+      yaw: -0.456
+      task_type: "docking"
+      task_num: "24"
+    MBNGP2:
+      x: 2.004
+      y: 1.645
+      yaw: -1.793
+      task_type: "docking"
+      task_num: "21"
+    MBNGP3:
+      x: 2.004
+      y: 1.645
+      yaw: -0.456
+      task_type: "docking"
+      task_num: "24"
+    MBNGP4:
+      x: 1.767
+      y: 1.645
+      yaw: -1.793
+      task_type: "docking"
+      task_num: "21"
+    MBNGP5:
+      x: 1.767
+      y: 1.645
+      yaw: -0.456
+      task_type: "goto"
+      task_num: "21"

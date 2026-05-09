@@ -4,6 +4,10 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
+namespace {
+constexpr float kMaxStagingTimeSeconds = 20.0F;
+}  // namespace
+
 NinjaSimaMainDocking::NinjaSimaMainDocking(rclcpp::Node* node)
 	: node_(node),
 	  is_docking_(false),
@@ -41,6 +45,7 @@ void NinjaSimaMainDocking::start_docking(const std::string& task_name, double x,
 	goal_msg.use_dock_id = false;
 	goal_msg.dock_type = "dock";
 	goal_msg.navigate_to_staging_pose = true;
+	goal_msg.max_staging_time = kMaxStagingTimeSeconds;
 
 	goal_msg.dock_pose.header.frame_id = "map";
 	goal_msg.dock_pose.header.stamp = node_->now();
@@ -68,10 +73,11 @@ void NinjaSimaMainDocking::start_docking(const std::string& task_name, double x,
 
 	RCLCPP_INFO(node_->get_logger(), "Sending docking goal %s: x=%.2f, y=%.2f, theta=%.2f",
 				active_docking_name_.c_str(), x, y, yaw);
-	RCLCPP_INFO(node_->get_logger(), "DockRobot goal sent: type=%s, use_dock_id=%s, navigate_to_staging_pose=%s",
+	RCLCPP_INFO(node_->get_logger(), "DockRobot goal sent: type=%s, use_dock_id=%s, navigate_to_staging_pose=%s, max_staging_time=%.1fs",
 				goal_msg.dock_type.c_str(),
 				goal_msg.use_dock_id ? "true" : "false",
-				goal_msg.navigate_to_staging_pose ? "true" : "false");
+				goal_msg.navigate_to_staging_pose ? "true" : "false",
+				goal_msg.max_staging_time);
 	RCLCPP_INFO(node_->get_logger(), "DockRobot goal %s dispatched; is_docking=true", active_docking_name_.c_str());
 }
 

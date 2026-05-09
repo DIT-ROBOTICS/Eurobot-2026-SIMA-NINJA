@@ -1,4 +1,17 @@
 # sima 搬 hazelnut 回家 (Mirrored across x=1.5)
+
+# void press_press_11(void* pvParameters);
+# void press_release_12(void* pvParameter);
+# void press_ready_13(void* pvParameter);
+# void press_takeup_14(void* pvParameter);
+# void tail_up_21(void* pvParameter);
+# void tail_down_22(void* pvParameter);
+# void tail_down_down_24(void* pvParameter);
+# void tail_shake_23(void);
+# void throw_black_hazelnut_29(void* pvParameter); this is for yellow
+# void throw_black_hazelnut_28(void* pvParameter); 
+
+
 ninja_sima_main_node:
   ros__parameters:
     waypoints: [

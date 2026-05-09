@@ -57,6 +57,7 @@ void Navigator::goToPose(
   const rclcpp::Duration & max_staging_duration,
   bool recursed)
 {
+  auto node = node_.lock();
   Nav2Pose::Goal goal;
   goal.pose = pose;
   goal.behavior_tree = navigator_bt_xml_;
@@ -68,17 +69,35 @@ void Navigator::goToPose(
   if (executor_.spin_until_future_complete(
       future_goal_handle, 2s) == rclcpp::FutureReturnCode::SUCCESS)
   {
-    auto future_result = nav_to_pose_client_->async_get_result(future_goal_handle.get());
-    if (executor_.spin_until_future_complete(
-        future_result, timeout) == rclcpp::FutureReturnCode::SUCCESS)
-    {
-      auto result = future_result.get();
-      if (result.code == rclcpp_action::ResultCode::SUCCEEDED) {
-        // Wait for velocity_smoother to stop publishing zero velocity
-        rclcpp::sleep_for(velocity_smoother_wait_.to_chrono<std::chrono::nanoseconds>());
-        return;  // Success!
+    auto goal_handle = future_goal_handle.get();
+    if (!goal_handle) {
+      RCLCPP_WARN(node->get_logger(), "Navigation request to staging pose was rejected.");
+    } else {
+      auto future_result = nav_to_pose_client_->async_get_result(goal_handle);
+      const auto result_status = executor_.spin_until_future_complete(future_result, timeout);
+      if (result_status == rclcpp::FutureReturnCode::SUCCESS) {
+        auto result = future_result.get();
+        if (result.code == rclcpp_action::ResultCode::SUCCEEDED) {
+          // Wait for velocity_smoother to stop publishing zero velocity
+          rclcpp::sleep_for(velocity_smoother_wait_.to_chrono<std::chrono::nanoseconds>());
+          return;  // Success!
+        }
+
+        RCLCPP_WARN(
+          node->get_logger(),
+          "Navigation request to staging pose finished unsuccessfully, result_code=%d.",
+          static_cast<int>(result.code));
+      } else {
+        RCLCPP_WARN(
+          node->get_logger(),
+          "Navigation request to staging pose timed out after %.2f seconds; canceling goal.",
+          max_staging_duration.seconds());
+        auto cancel_future = nav_to_pose_client_->async_cancel_goal(goal_handle);
+        executor_.spin_until_future_complete(cancel_future, 2s);
       }
     }
+  } else {
+    RCLCPP_WARN(node->get_logger(), "Timed out waiting for staging navigation goal response.");
   }
 
   // Attempt to retry once using single iteration recursion
