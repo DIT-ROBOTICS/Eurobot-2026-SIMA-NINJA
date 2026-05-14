@@ -1,6 +1,6 @@
 # Name of the domain bridge, used for node naming and logging
 name: my_bridge
-from_domain: 14
+from_domain: 11
 to_domain: 50
 topics:
   # Bridge "/bot2/pose/global"
@@ -15,6 +15,11 @@ topics:
   # Bridge start signal topic to ninja sima domains
   robot/startup/ninja/start:
     type: std_msgs/msg/Int16
+    to_domain: 69
+
+  robot/startup/sima_game_over:
+    remap: stopRobot
+    type: std_msgs/msg/Bool
     to_domain: 69
 
   # # Bridge "/clock" topic from doman ID 2 to domain ID 3

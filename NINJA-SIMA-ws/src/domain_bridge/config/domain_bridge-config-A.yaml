@@ -17,6 +17,11 @@ topics:
     type: std_msgs/msg/Int16
     to_domain: 59
 
+  robot/startup/sima_game_over:
+    remap: stopRobot
+    type: std_msgs/msg/Bool
+    to_domain: 59
+
   # # Bridge "/clock" topic from doman ID 2 to domain ID 3
   # clock:
   #   type: rosgraph_msgs/msg/Clock

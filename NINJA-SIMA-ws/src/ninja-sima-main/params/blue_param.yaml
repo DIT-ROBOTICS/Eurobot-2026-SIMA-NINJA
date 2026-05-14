@@ -1,135 +1,37 @@
-# sima 搬 hazelnut 回家
+# Line-symmetric mirror of yellow_param.yaml across x=1.5.
+# 11: front take 2; 12: put 2
 ninja_sima_main_node:
   ros__parameters:
-    waypoints: ["p1", "p2", "p3", "p4", "p4_2", "p5", "p5_1", "p6", "p7", "p8", "p9", "p10", "p11", "p12", "p13"]
-    
-    # move 2 hazelnut 疼空間
-    p1:
-      x: 2.0
-      y: 1.865
-      yaw: -0.517
-      task_type: "docking"
-      task_num: "24"
+    waypoints: [
+                "TAKE_1_GO", "TAKE_1_DOCK",
+                "PUT_1_GO",  "PUT_1_DOCK",
+                "TAKE_2_GO", "TAKE_2_DOCK",
+                "PUT_2_GO",  "PUT_2_DOCK",
+                "TAIL_2nd_FLOOR", "TAIL_2nd_FLOOR_GOAL",
+                "PUSH_1st_GROUP_WAIT", "PUSH_1st_GROUP_GO", "PUSH_1st_GROUP_DOWN",
+                "PUSH_2nd_GROUP_TRANSITION", "PUSH_2nd_GROUP_WAIT", "PUSH_2nd_GROUP_GO", "PUSH_2nd_GROUP_DOWN",
+                ]
 
-    p2:
-      x: 1.811
-      y: 1.879
-      yaw: -0.548
-      task_type: "docking"
-      task_num: "21"
-    
-    p3:
-      x: 1.927
-      y: 1.879
-      yaw: -0.548
-      task_type: "docking"
-      task_num: "13"
-    
-    # move 1st nut    
-    p4:
-      x: 1.88
-      y: 1.75
-      yaw: -0.0
-      task_type: "docking"
-      task_num: "11"
+    TAKE_1_GO:    { x: 1.908, y: 1.903, yaw:  1.580, task_type: "goto",    task_num: "11" }
+    TAKE_1_DOCK:  { x: 1.909, y: 1.869, yaw:  1.591, task_type: "docking", task_num: "11" }
 
-    p4_2:
-      x: 1.97
-      y: 1.720
-      yaw: -0.0
-      task_type: "goto"
-      task_num: "11"
-    
-    p5:
-      x: 1.97
-      y: 1.72
-      yaw: -0.067
-      task_type: "docking"
-      task_num: "14"
-    
-    p5_1:
-      x: 1.97
-      y: 1.865
-      yaw: 3.172
-      task_type: "goto"
-      task_num: "14"
-    
-    p6:
-      x: 2.309
-      y: 1.865
-      yaw: 3.172
-      task_type: "docking"
-      task_num: "12"
-    
-    # move black nut
-    p7:
-      x: 2.282
-      y: 1.865
-      yaw: -0.456
-      task_type: "docking"
-      task_num: "22"
+    PUT_1_GO:     { x: 2.270, y: 1.887, yaw:  3.130, task_type: "go",      task_num: "12" }
+    PUT_1_DOCK:   { x: 2.333, y: 1.888, yaw:  3.131, task_type: "docking", task_num: "12" }
 
-    p8:
-      x: 2.282
-      y: 1.817
-      yaw: -0.456
-      task_type: "goto"
-      task_num: "22"
+    TAKE_2_GO:    { x: 1.815, y: 1.786, yaw:  3.111, task_type: "goto",    task_num: "11" }
+    TAKE_2_DOCK:  { x: 1.765, y: 1.781, yaw:  3.111, task_type: "docking", task_num: "11" }
 
-    p9:
-      x: 2.061
-      y: 1.817
-      yaw: -0.456
-      task_type: "docking"
-      task_num: "21"
-    
-    # p10:
-    #   x: 2.053
-    #   y: 1.826
-    #   yaw: -0.541
-    #   task_type: "docking"
-    #   task_num: "24"
-    
-    # p11:
-    #   x: 2.164
-    #   y: 1.818
-    #   yaw: -0.600
-    #   task_type: "docking"
-    #   task_num: "21"
+    PUT_2_GO:     { x: 2.270, y: 1.887, yaw:  3.130, task_type: "go",      task_num: "12" }
+    PUT_2_DOCK:   { x: 2.333, y: 1.888, yaw:  3.131, task_type: "docking", task_num: "12" }
 
-    # p12:
-    #   x: 2.266
-    #   y: 1.800
-    #   yaw: -0.457
-    #   task_type: "goto"
-    #   task_num: "29"
+    TAIL_2nd_FLOOR:      { x: 2.300, y: 1.811, yaw: -2.686, task_type: "docking", task_num: "42" }
+    TAIL_2nd_FLOOR_GOAL: { x: 1.974, y: 1.811, yaw: -2.686, task_type: "docking", task_num: "42" }
 
-    # p13:
-    #   x: 2.260
-    #   y: 1.666
-    #   yaw: -0.5
-    #   task_type: "goto"
-    #   task_num: "29"
+    PUSH_1st_GROUP_WAIT: { x: 2.179, y: 1.880, yaw: -2.673, task_type: "docking", task_num: "41" }
+    PUSH_1st_GROUP_GO:   { x: 2.179, y: 1.840, yaw: -2.673, task_type: "docking", task_num: "41" }
+    PUSH_1st_GROUP_DOWN: { x: 2.154, y: 1.625, yaw: -2.673, task_type: "docking", task_num: "41" }
 
-
-    
-    # p10:
-    #   x: 2.157
-    #   y: 1.823
-    #   yaw: -0.489
-    #   task_type: "docking"
-    #   task_num: "12"
-
-    # p11:
-    #   x: 2.132
-    #   y: 1.866
-    #   yaw: -0.520
-    #   task_type: "docking"
-    #   task_num: "12"
-
-    # p12:
-    #   x: 2.256
-    #   y: 1.758
-    #   yaw: 3.674
-    #   task_type: "docking"
-    #   task_num: "12"
+    PUSH_2nd_GROUP_TRANSITION: { x: 2.179, y: 1.880, yaw: -2.673, task_type: "docking", task_num: "41" }
+    PUSH_2nd_GROUP_WAIT:       { x: 2.280, y: 1.880, yaw: -2.673, task_type: "docking", task_num: "41" }
+    PUSH_2nd_GROUP_GO:         { x: 2.280, y: 1.840, yaw: -2.661, task_type: "docking", task_num: "41" }
+    PUSH_2nd_GROUP_DOWN:       { x: 2.280, y: 1.817, yaw: -2.660, task_type: "docking", task_num: "41" }

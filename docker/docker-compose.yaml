@@ -24,15 +24,14 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
 
-    working_dir:
-      /home/user/NINJA-SIMA-ws
+    working_dir: /home/user/NINJA-SIMA-ws
 
     environment:
-      - DISPLAY=${DISPLAY}  # Set display environment variable
+      - DISPLAY=${DISPLAY} # Set display environment variable
       - RCUTILS_COLORIZED_OUTPUT=1
-      - XAUTHORITY=/home/user/.Xauthority   # Set Xauthority path
+      - XAUTHORITY=/home/user/.Xauthority # Set Xauthority path
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-      - CYCLONEDDS_URI=file:///home/user/settings/cyclonedds.xml
+      # - CYCLONEDDS_URI=file:///home/user/settings/cyclonedds.xml
 
   uros-agent:
     build:
@@ -56,5 +55,5 @@ services:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
       - CYCLONEDDS_URI=file:///home/user/settings/cyclonedds.xml
 
-    entrypoint: ["/bin/bash", "-c", "/root/uros-agent-ws/uros-agent-start.sh"]
-    command: ["/bin/bash"]
+    entrypoint: [ "/bin/bash", "-c", "/root/uros-agent-ws/uros-agent-start.sh" ]
+    command: [ "/bin/bash" ]

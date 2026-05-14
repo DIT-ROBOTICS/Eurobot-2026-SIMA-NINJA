@@ -1,220 +1,134 @@
-# sima 搬 hazelnut 回家 (Mirrored across x=1.5)
+# 11: front take 2; 12: put 2 
 ninja_sima_main_node:
   ros__parameters:
     waypoints: [
-                "M2N1", "M2N2", "M2N3", 
-                "T1N1", "T1N2", "T1N3", "T1N4", 
-                # "T2N1", "T2N2", "T2N3", "T2N4", "T2N5", "T2N6", 
-                # "MBN1", "MBN2", "MBN3", 
-                "HRBN1", "HRBN2", 
-                "MFFN1", "MFFN1_2", "MFFN2", "MFFN3", "MFFN4", "MFFN5", "MFFN6", 
-                "MBNGP1", "MBNGP2", "MBNGP3", "MBNGP4", "MBNGP5", 
+                "TAKE_1_GO", "TAKE_1_DOCK",
+                "PUT_1_GO",  "PUT_1_DOCK",
+                "TAKE_2_GO", "TAKE_2_DOCK",
+                "PUT_2_GO",  "PUT_2_DOCK",
+                # "TAIL_2nd_FLOOR", "TAIL_2nd_FLOOR_GOAL",
+                # "PUSH_1st_GROUP_WAIT", "PUSH_1st_GROUP_GO", "PUSH_1st_GROUP_DOWN",
+                # "PUSH_2nd_GROUP_TRANSITION", "PUSH_2nd_GROUP_WAIT", "PUSH_2nd_GROUP_GO", "PUSH_2nd_GROUP_DOWN",
                 ]
-    
-    # move 2 nut 疼空間 (M2N) ["M2N1", "M2N2", "M2N3", ]
-    M2N1:
-      x: 0.950
-      y: 1.870
-      yaw: -0.445
-      task_type: "docking"
-      task_num: "24"
-
-    M2N2:
-      x: 1.175
-      y: 1.870
-      yaw: -0.445
-      task_type: "docking"
-      task_num: "21"
-    
-    M2N3:
-      x: 1.115
-      y: 1.878
-      yaw: -3.120
+  
+    TAKE_1_GO:
+      x: 1.092
+      y: 1.903
+      yaw: 1.583
       task_type: "goto"
-      task_num: "13"
-    
-    # take 1st nut (T1N) ["T1N1", "T1N2", "T1N3", "T1N4", ]
-    T1N1:
-      x: 1.140
-      y: 1.740
-      yaw: -3.120
+      task_num: "11"
+
+    TAKE_1_DOCK:
+      x: 1.114
+      y: 1.852
+      yaw: 1.591
       task_type: "docking"
       task_num: "11"
 
-    T1N2:
-      x: 1.100
-      y: 1.725
-      yaw: -3.120
-      task_type: "docking"
-      task_num: "14"
-    
-    T1N3:
-      x: 1.050
-      y: 1.880
-      yaw: 0.0
-      task_type: "goto"
-      task_num: "14"
-    
-    T1N4:
-      x: 0.680
-      y: 1.880
-      yaw: 0.0
+    PUT_1_GO:
+      x: 0.730
+      y: 1.887
+      yaw: 0.012
+      task_type: "go"
+      task_num: "12"
+
+    PUT_1_DOCK:
+      x: 0.667
+      y: 1.888
+      yaw: 0.011
       task_type: "docking"
       task_num: "12"
+
+    TAKE_2_GO:
+      x: 1.215
+      y: 1.786
+      yaw: -3.102
+      task_type: "goto"
+      task_num: "11"
     
-    # # move black nut (MBN) ["MBN1", "MBN2", "MBN3", ]
-    # MBN1:
-    #   x: 0.690
-    #   y: 1.880
-    #   yaw: -0.471
-    #   task_type: "docking"
-    #   task_num: "22"
-
-    # MBN2:
-    #   x: 0.690
-    #   y: 1.811
-    #   yaw: -0.471
-    #   task_type: "goto"
-    #   task_num: "22"
-
-    # MBN3:
-    #   x: 0.930
-    #   y: 1.811
-    #   yaw: -0.456
-    #   task_type: "docking"
-    #   task_num: "24"
-
-    # home run black nut ["HRBN1", "HRBN2", ]
-    HRBN1:
-      x: 0.690
-      y: 1.880
-      yaw: -0.471
+    TAKE_2_DOCK:
+      x: 1.235
+      y: 1.781
+      yaw: -3.092
       task_type: "docking"
-      task_num: "22"
-    HRBN2:
-      x: 0.690
-      y: 1.835
-      yaw: -0.471
-      task_type: "docking"
-      task_num: "28"
+      task_num: "11"
 
-    # # move four full nut (MFFN) ["MFFN1", "MFFN1_2", "MFFN2", "MFFN3", "MFFN4", "MFFN5", "MFFN6", ]
-    
-    MFFN1:
-      x: 1.02
+    PUT_2_GO:
+      x: 0.730
+      y: 1.887
+      yaw: 0.012
+      task_type: "go"
+      task_num: "12"
+
+    PUT_2_DOCK:
+      x: 0.667
+      y: 1.888
+      yaw: 0.011
+      task_type: "docking"
+      task_num: "12"
+
+    TAIL_2nd_FLOOR:
+      x: 0.700
       y: 1.811
       yaw: -0.456
       task_type: "docking"
-      task_num: "24"
-    
-    MFFN1_2:
-      x: 0.830
+      task_num: "42"
+
+    TAIL_2nd_FLOOR_GOAL:
+      x: 1.026
       y: 1.811
       yaw: -0.456
       task_type: "docking"
-      task_num: "21"
+      task_num: "42"  
 
-    MFFN2:
-      x: 0.80
-      y: 1.811
-      yaw: -0.456
-      task_type: "goto" # docking original
-      task_num: "11"
-
-    MFFN3:
-      x: 0.80
-      y: 1.640
-      yaw: -0.456
-      task_type: "goto" # docking original
-      task_num: "12"
-
-    MFFN4:
-      x: 0.830
-      y: 1.825
-      yaw: -0.456
-      task_type: "goto"
-      task_num: "12"
-
-    MFFN5:
-      x: 0.691
-      y: 1.820
-      yaw: -0.456
-      task_type: "goto"
-      task_num: "12"
-
-    MFFN6:
-      x: 0.691
-      y: 1.640
-      yaw: -0.456
-      task_type: "goto"
-      task_num: "12"
-    
-    # take 2nd nut (T2N) ["T2N1", "T2N2", "T2N3", "T2N4", "T2N5", "T2N6", ]
-    T2N1:
-      x: 0.715
-      y: 1.860
-      yaw: -3.139
-      task_type: "goto"
-      task_num: "12"
-    T2N2:
-      x: 1.165
-      y: 1.860
-      yaw: -3.139
-      task_type: "docking"
-      task_num: "13"
-    T2N3:
-      x: 1.165
-      y: 1.715
-      yaw: -3.139
-      task_type: "docking"
-      task_num: "11"
-    T2N4:
-      x: 1.165
-      y: 1.860
-      yaw: -3.139
-      task_type: "docking"
-      task_num: "14"
-    T2N5:
-      x: 1.165
-      y: 1.860
-      yaw: 0.0
-      task_type: "goto"
-      task_num: "11"
-    T2N6:
-      x: 0.675
+    PUSH_1st_GROUP_WAIT:
+      x: 0.821
       y: 1.880
-      yaw: 0.0
+      yaw: -0.469
       task_type: "docking"
-      task_num: "12"
+      task_num: "41" 
 
-    # move black nut and go to pentry (MBNGP) ["MBNGP1", "MBNGP2", "MBNGP3", "MBNGP4", "MBNGP5", ]
-    MBNGP1:
-      x: 0.996
-      y: 1.645
-      yaw: -0.456
+    PUSH_1st_GROUP_GO:
+      x: 0.821
+      y: 1.840
+      yaw: -0.469
       task_type: "docking"
-      task_num: "24"
-    MBNGP2:
-      x: 0.996
-      y: 1.645
-      yaw: 1.795
+      task_num: "41"  
+
+    PUSH_1st_GROUP_DOWN:
+      x: 0.846
+      y: 1.625
+      yaw: -0.469
       task_type: "docking"
-      task_num: "21"
-    MBNGP3:
-      x: 0.996
-      y: 1.645
-      yaw: -0.456
+      task_num: "41"  
+
+    PUSH_2nd_GROUP_TRANSITION:
+      x: 0.821
+      y: 1.880
+      yaw: -0.469
       task_type: "docking"
-      task_num: "24"
-    MBNGP4:
-      x: 1.233
-      y: 1.645
-      yaw: 1.795
+      task_num: "41" 
+
+    PUSH_2nd_GROUP_WAIT:
+      x: 0.720
+      y: 1.880
+      yaw: -0.469
       task_type: "docking"
-      task_num: "21"
-    MBNGP5:
-      x: 1.233
-      y: 1.645
-      yaw: -0.456
-      task_type: "goto"
-      task_num: "21"
+      task_num: "41" 
+
+    PUSH_2nd_GROUP_GO:
+      x: 0.720
+      y: 1.840
+      yaw: -0.481
+      task_type: "docking"
+      task_num: "41"  
+
+    PUSH_2nd_GROUP_DOWN:
+      x: 0.720
+      y: 1.817
+      yaw: -0.482
+      task_type: "docking"
+      task_num: "41"  
+    
+
+  

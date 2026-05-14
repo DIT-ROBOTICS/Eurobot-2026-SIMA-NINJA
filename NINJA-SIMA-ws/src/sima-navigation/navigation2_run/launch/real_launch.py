@@ -37,9 +37,9 @@ def generate_launch_description():
     # params_file_name = 'nav2_params_sima.yaml'
     # print('[INFO] [real_launch] Use nav2_params_sima.yaml')
 
-    if ros_domain_id == '59':
-        params_file_name = 'nav2_params_sima_ninja_59.yaml'
-        print('[INFO] [real_launch] ROS_DOMAIN_ID=59. Use nav2_params_sima_ninja_59.yaml')
+    if ros_domain_id == '69':
+        params_file_name = 'nav2_params_sima_ninja_69.yaml'
+        print('[INFO] [real_launch] ROS_DOMAIN_ID=69. Use nav2_params_sima_ninja_69.yaml')
     else:
         params_file_name = 'nav2_params_sima.yaml'
         print(f'[INFO] [real_launch] Unrecognized ROS_DOMAIN_ID={ros_domain_id}. Use default params file')
