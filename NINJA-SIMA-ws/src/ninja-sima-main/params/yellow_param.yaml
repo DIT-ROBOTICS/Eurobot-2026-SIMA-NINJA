@@ -6,8 +6,8 @@ ninja_sima_main_node:
                 "PUT_1_GO",  "PUT_1_DOCK",
                 "TAKE_2_GO", "TAKE_2_DOCK",
                 "PUT_2_GO",  "PUT_2_DOCK",
-                # "TAIL_2nd_FLOOR", "TAIL_2nd_FLOOR_GOAL",
-                # "PUSH_1st_GROUP_WAIT", "PUSH_1st_GROUP_GO", "PUSH_1st_GROUP_DOWN",
+                "TAIL_2nd_FLOOR", "TAIL_2nd_FLOOR_GOAL",
+                "PUSH_1st_GROUP_WAIT", "PUSH_1st_GROUP_GO", "PUSH_1st_GROUP_DOWN",
                 # "PUSH_2nd_GROUP_TRANSITION", "PUSH_2nd_GROUP_WAIT", "PUSH_2nd_GROUP_GO", "PUSH_2nd_GROUP_DOWN",
                 ]
   
@@ -47,7 +47,7 @@ ninja_sima_main_node:
       task_num: "11"
     
     TAKE_2_DOCK:
-      x: 1.235
+      x: 1.25
       y: 1.781
       yaw: -3.092
       task_type: "docking"
