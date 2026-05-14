@@ -47,6 +47,7 @@ void NinjaSimaMainDocking::start_docking(const std::string& task_name, double x,
 	goal_msg.dock_pose.pose.position.x = x;
 	goal_msg.dock_pose.pose.position.y = y;
 	goal_msg.dock_pose.pose.position.z = 0.0;
+	goal_msg.max_staging_time = 6000.0;
 
 	tf2::Quaternion q;
 	q.setRPY(0.0, 0.0, yaw);
